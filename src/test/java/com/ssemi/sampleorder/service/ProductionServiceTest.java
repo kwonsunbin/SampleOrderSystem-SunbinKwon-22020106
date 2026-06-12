@@ -110,17 +110,17 @@ class ProductionServiceTest {
         }
 
         @Test
-        @DisplayName("processNext → 재고 정확히 반영 (생산 후 주문량 차감)")
+        @DisplayName("processNext → 재고 정확히 반영 (생산분 addStock, 차감은 출고 시)")
         void processNextUpdatesStockCorrectly() {
             // stock=0, qty=10, yield=1.0
             // shortage=10, actual=ceil(10/0.9)=12
-            // newStock = 0 + 12 = 12, finalStock = 12 - 10 = 2
+            // newStock = 0 + 12 = 12 (차감은 출고 시)
             sampleRepo.save(new Sample("S001", "GaAs", 5, 1.0, 0));
             enqueueProducingOrder("O001", "S001", 10);
 
             productionService.processNext();
 
-            assertEquals(2, sampleRepo.findById("S001").get().getStock());
+            assertEquals(12, sampleRepo.findById("S001").get().getStock());
         }
 
         @Test
@@ -366,9 +366,9 @@ class ProductionServiceTest {
         }
 
         @Test
-        @DisplayName("완료 시 재고 정확히 반영 (addStock → reduceStock)")
+        @DisplayName("완료 시 재고 정확히 반영 (addStock만, 차감은 출고 시)")
         void completionUpdatesStockCorrectly() {
-            // stock=0, qty=10, yield=1.0 → shortage=10 → actual=12 → finalStock=2
+            // stock=0, qty=10, yield=1.0 → shortage=10 → actual=12 → stock=12 (차감은 출고 시)
             sampleRepo.save(new Sample("S001", "GaAs", 5, 1.0, 0));
             LocalDateTime start = LocalDateTime.of(2026, 6, 12, 9, 0);
             // totalSeconds=60 (12개 * 5초)
@@ -377,7 +377,7 @@ class ProductionServiceTest {
             Clock clock = clockAt(start.plusSeconds(60));
             productionService.completeProductionIfReady(clock);
 
-            assertEquals(2, sampleRepo.findById("S001").get().getStock());
+            assertEquals(12, sampleRepo.findById("S001").get().getStock());
         }
 
         @Test

@@ -38,7 +38,7 @@ class ReleaseControllerTest {
         @Test
         @DisplayName("handleRelease() 호출 시 orderService.listConfirmedOrders()가 정확히 1회 호출됨")
         void releaseShowsConfirmedOrders() {
-            String input = "O001\n";
+            String input = "1\n";
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             InputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
             ConsoleView consoleView = new ConsoleView(inputStream, new PrintStream(outputStream));
@@ -60,7 +60,7 @@ class ReleaseControllerTest {
         @Test
         @DisplayName("입력한 주문 ID 'O001'로 orderService.releaseOrder('O001')이 정확히 1회 호출됨")
         void releaseCallsReleaseOrderWithId() {
-            String input = "O001\n";
+            String input = "1\n";
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             InputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
             ConsoleView consoleView = new ConsoleView(inputStream, new PrintStream(outputStream));
@@ -86,7 +86,7 @@ class ReleaseControllerTest {
         @Test
         @DisplayName("출고 처리 성공 시 출력에 '출고' 또는 'RELEASED'가 포함됨")
         void releasePrintsReleasedMessage() {
-            String input = "O001\n";
+            String input = "1\n";
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             InputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
             ConsoleView consoleView = new ConsoleView(inputStream, new PrintStream(outputStream));
@@ -144,7 +144,7 @@ class ReleaseControllerTest {
         @Test
         @DisplayName("releaseOrder()가 예외를 던져도 오류 메시지를 출력하고 예외가 외부로 전파되지 않음")
         void releaseShowsErrorWhenServiceThrows() {
-            String input = "O999\n";
+            String input = "1\n";
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             InputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
             ConsoleView consoleView = new ConsoleView(inputStream, new PrintStream(outputStream));
