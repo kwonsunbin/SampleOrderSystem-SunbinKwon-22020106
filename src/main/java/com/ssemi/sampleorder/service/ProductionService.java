@@ -26,7 +26,10 @@ public class ProductionService {
             throw new IllegalArgumentException("부족분은 1 이상이어야 합니다: " + shortage);
         if (yield <= 0.0 || yield > 1.0)
             throw new IllegalArgumentException("수율은 0 초과 1 이하여야 합니다: " + yield);
-        return (int) Math.ceil(shortage / (yield * 0.9));
+        long result = (long) Math.ceil(shortage / (yield * 0.9));
+        if (result > Integer.MAX_VALUE)
+            throw new ArithmeticException("실 생산량이 int 범위를 초과합니다: " + result);
+        return (int) result;
     }
 
     // 총 생산시간 = 평균 생산시간 * 실 생산량
