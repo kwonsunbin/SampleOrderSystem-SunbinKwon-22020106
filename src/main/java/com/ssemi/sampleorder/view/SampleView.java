@@ -38,7 +38,7 @@ public class SampleView {
                 String.valueOf(i + 1),
                 shortId(s.getId()),
                 s.getName(),
-                s.getAvgProductionTime() + " m/ea",
+                s.getAvgProductionTime() + " s/ea",
                 String.format("%.2f", s.getYield()),
                 s.getStock() + " ea"
             });
@@ -71,7 +71,7 @@ public class SampleView {
                 String.valueOf(i + 1),
                 shortId(s.getId()),
                 s.getName(),
-                s.getAvgProductionTime() + " m/ea",
+                s.getAvgProductionTime() + " s/ea",
                 String.format("%.2f", s.getYield()),
                 s.getStock() + " ea"
             });

@@ -82,9 +82,9 @@ public class MainController {
     private void showMainMenu() {
         if (sampleService != null && monitorService != null) {
             try {
-                int sampleCount  = sampleService.listSamples().size();
-                int totalStock   = sampleService.listSamples().stream()
-                    .mapToInt(s -> s.getStock()).sum();
+                var samples      = sampleService.listSamples();
+                int sampleCount  = samples.size();
+                int totalStock   = samples.stream().mapToInt(s -> s.getStock()).sum();
                 Map<OrderStatus, Long> counts = monitorService.getOrderCountByStatus();
                 long orderCount    = counts.values().stream().mapToLong(Long::longValue).sum();
                 long producingCount = counts.getOrDefault(OrderStatus.PRODUCING, 0L);

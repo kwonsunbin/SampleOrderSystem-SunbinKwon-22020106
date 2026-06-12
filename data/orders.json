@@ -1,26 +1,9 @@
-[
-  {
-    "createdAt": "2026-06-12T14:42:25",
-    "quantity": 5,
-    "sampleId": "S001",
-    "id": "ORD-0001",
-    "customerName": "hi",
-    "status": "RELEASED"
-  },
-  {
-    "createdAt": "2026-06-12T14:43:31",
-    "quantity": 40,
-    "sampleId": "S002",
-    "id": "ORD-0002",
-    "customerName": "bye",
-    "status": "RELEASED"
-  },
-  {
-    "createdAt": "2026-06-12T14:46:59",
-    "quantity": 100,
-    "sampleId": "S005",
-    "id": "ORD-0003",
-    "customerName": "what",
-    "status": "CONFIRMED"
-  }
-]
+[{
+  "createdAt": "2026-06-12T15:46:56",
+  "totalProductionSeconds": 0,
+  "quantity": 3,
+  "sampleId": "S002",
+  "id": "ORD-0001",
+  "customerName": "고객C",
+  "status": "RELEASED"
+}]
