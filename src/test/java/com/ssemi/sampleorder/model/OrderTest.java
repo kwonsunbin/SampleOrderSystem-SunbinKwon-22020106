@@ -5,6 +5,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDateTime;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Order 도메인 모델 테스트")
@@ -165,6 +167,57 @@ class OrderTest {
         void negativeQuantityThrows() {
             assertThrows(IllegalArgumentException.class,
                     () -> new Order("O002", "S001", "고객", -1));
+        }
+    }
+
+    // ── NEW: 생산 시간 추적 ───────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("생산 시간 추적 — startProduction")
+    class ProductionTimeTracking {
+
+        @Test
+        @DisplayName("생성 직후 productionStartedAt은 null")
+        void initialProductionStartedAtIsNull() {
+            assertNull(order.getProductionStartedAt());
+        }
+
+        @Test
+        @DisplayName("생성 직후 totalProductionMinutes는 0")
+        void initialTotalProductionMinutesIsZero() {
+            assertEquals(0, order.getTotalProductionMinutes());
+        }
+
+        @Test
+        @DisplayName("startProduction → productionStartedAt 기록됨")
+        void startProductionRecordsStartedAt() {
+            order.transitionTo(OrderStatus.PRODUCING);
+            LocalDateTime now = LocalDateTime.of(2026, 6, 12, 9, 0);
+            order.startProduction(now, 60);
+            assertEquals(now, order.getProductionStartedAt());
+        }
+
+        @Test
+        @DisplayName("startProduction → totalProductionMinutes 기록됨")
+        void startProductionRecordsTotalMinutes() {
+            order.transitionTo(OrderStatus.PRODUCING);
+            order.startProduction(LocalDateTime.of(2026, 6, 12, 9, 0), 120);
+            assertEquals(120, order.getTotalProductionMinutes());
+        }
+
+        @Test
+        @DisplayName("PRODUCING이 아닌 상태(RESERVED)에서 startProduction → IllegalStateException")
+        void startProductionOnReservedThrows() {
+            assertThrows(IllegalStateException.class,
+                    () -> order.startProduction(LocalDateTime.now(), 60));
+        }
+
+        @Test
+        @DisplayName("CONFIRMED 상태에서 startProduction → IllegalStateException")
+        void startProductionOnConfirmedThrows() {
+            order.transitionTo(OrderStatus.CONFIRMED);
+            assertThrows(IllegalStateException.class,
+                    () -> order.startProduction(LocalDateTime.now(), 60));
         }
     }
 

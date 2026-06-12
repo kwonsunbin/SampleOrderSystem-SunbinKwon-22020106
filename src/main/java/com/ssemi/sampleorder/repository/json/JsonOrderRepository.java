@@ -88,23 +88,33 @@ public class JsonOrderRepository implements OrderRepository {
     }
 
     private JSONObject toJson(Order o) {
-        return new JSONObject()
+        JSONObject obj = new JSONObject()
                 .put("id", o.getId())
                 .put("sampleId", o.getSampleId())
                 .put("customerName", o.getCustomerName())
                 .put("quantity", o.getQuantity())
                 .put("status", o.getStatus().name())
-                .put("createdAt", o.getCreatedAt().withNano(0).toString());
+                .put("createdAt", o.getCreatedAt().withNano(0).toString())
+                .put("totalProductionMinutes", o.getTotalProductionMinutes());
+        if (o.getProductionStartedAt() != null)
+            obj.put("productionStartedAt", o.getProductionStartedAt().withNano(0).toString());
+        return obj;
     }
 
     private Order fromJson(JSONObject j) {
+        LocalDateTime productionStartedAt = j.has("productionStartedAt") && !j.isNull("productionStartedAt")
+                ? LocalDateTime.parse(j.getString("productionStartedAt"))
+                : null;
+        int totalProductionMinutes = j.optInt("totalProductionMinutes", 0);
         return new Order(
                 j.getString("id"),
                 j.getString("sampleId"),
                 j.getString("customerName"),
                 j.getInt("quantity"),
                 OrderStatus.valueOf(j.getString("status")),
-                LocalDateTime.parse(j.getString("createdAt"))
+                LocalDateTime.parse(j.getString("createdAt")),
+                productionStartedAt,
+                totalProductionMinutes
         );
     }
 }

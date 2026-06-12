@@ -4,7 +4,11 @@ import com.ssemi.sampleorder.model.*;
 import com.ssemi.sampleorder.repository.OrderRepository;
 import com.ssemi.sampleorder.repository.SampleRepository;
 
+import java.time.Clock;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public class ProductionService {
 
@@ -60,5 +64,91 @@ public class ProductionService {
 
     public List<Order> getQueueSnapshot() {
         return productionQueue.toList();
+    }
+
+    // RESERVED → PRODUCING: 단일 생산 라인 시작
+    public Order startNextProduction(Clock clock) {
+        if (!orderRepository.findByStatus(OrderStatus.PRODUCING).isEmpty())
+            throw new IllegalStateException("이미 생산 중인 주문이 있습니다.");
+        if (productionQueue.isEmpty())
+            throw new IllegalStateException("생산 큐가 비어 있습니다.");
+
+        Order order = productionQueue.dequeue();
+        Sample sample = sampleRepository.findById(order.getSampleId())
+                .orElseThrow(() -> new IllegalArgumentException("시료를 찾을 수 없습니다: " + order.getSampleId()));
+
+        int shortage = Math.max(0, order.getQuantity() - sample.getStock());
+        int unitsToMake = shortage > 0
+                ? calculateActualProduction(shortage, sample.getYield())
+                : order.getQuantity();
+        int totalMinutes = calculateTotalProductionTime(sample.getAvgProductionTime(), unitsToMake);
+
+        order.transitionTo(OrderStatus.PRODUCING);
+        order.startProduction(LocalDateTime.now(clock), totalMinutes);
+        orderRepository.save(order);
+        return order;
+    }
+
+    // 경과 시간 체크 후 생산 완료 처리: PRODUCING → CONFIRMED, 재고 반영
+    public void completeProductionIfReady(Clock clock) {
+        List<Order> producing = orderRepository.findByStatus(OrderStatus.PRODUCING);
+        if (producing.isEmpty()) return;
+
+        Order order = producing.get(0);
+        LocalDateTime startedAt = order.getProductionStartedAt();
+        if (startedAt == null) return;
+
+        long elapsed = Duration.between(startedAt, LocalDateTime.now(clock)).toMinutes();
+        if (elapsed < order.getTotalProductionMinutes()) return;
+
+        Sample sample = sampleRepository.findById(order.getSampleId())
+                .orElseThrow(() -> new IllegalArgumentException("시료를 찾을 수 없습니다: " + order.getSampleId()));
+
+        int shortage = Math.max(0, order.getQuantity() - sample.getStock());
+        if (shortage > 0) {
+            int actualProduction = calculateActualProduction(shortage, sample.getYield());
+            sample.addStock(actualProduction);
+        }
+        sample.reduceStock(order.getQuantity());
+        order.transitionTo(OrderStatus.CONFIRMED);
+
+        sampleRepository.save(sample);
+        orderRepository.save(order);
+    }
+
+    // 현재 PRODUCING 주문의 진행 정보 반환
+    public Optional<ProductionProgressInfo> getCurrentlyProducingInfo(Clock clock) {
+        List<Order> producing = orderRepository.findByStatus(OrderStatus.PRODUCING);
+        if (producing.isEmpty()) return Optional.empty();
+
+        Order order = producing.get(0);
+        Sample sample = sampleRepository.findById(order.getSampleId())
+                .orElseThrow(() -> new IllegalArgumentException("시료를 찾을 수 없습니다: " + order.getSampleId()));
+
+        LocalDateTime startedAt = order.getProductionStartedAt();
+        LocalDateTime now = LocalDateTime.now(clock);
+        long elapsed = startedAt != null ? Duration.between(startedAt, now).toMinutes() : 0;
+        int total = order.getTotalProductionMinutes();
+        int progressPercent = total > 0 ? (int) Math.min(100, elapsed * 100 / total) : 0;
+        LocalDateTime eta = startedAt != null ? startedAt.plusMinutes(total) : now;
+
+        int shortage = Math.max(0, order.getQuantity() - sample.getStock());
+        int actualProduction = shortage > 0
+                ? calculateActualProduction(shortage, sample.getYield())
+                : order.getQuantity();
+
+        return Optional.of(new ProductionProgressInfo(
+                order,
+                sample.getName(),
+                sample.getStock(),
+                shortage,
+                actualProduction,
+                sample.getYield(),
+                sample.getAvgProductionTime(),
+                elapsed,
+                total,
+                progressPercent,
+                eta
+        ));
     }
 }
