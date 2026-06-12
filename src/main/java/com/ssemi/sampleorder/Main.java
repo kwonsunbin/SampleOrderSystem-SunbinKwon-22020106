@@ -37,7 +37,6 @@ public class Main {
 
         DataInitializer dataInitializer = new DataInitializer(sampleRepo, orderRepo);
         dataInitializer.seedSamples();
-        dataInitializer.clearOrders();
 
         SampleService     sampleService     = new SampleService(sampleRepo);
         OrderService      orderService      = new OrderService(orderRepo, sampleRepo, queue);
