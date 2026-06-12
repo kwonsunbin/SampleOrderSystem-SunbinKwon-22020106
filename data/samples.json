@@ -1,37 +1,37 @@
 [
   {
-    "id": "S001",
-    "name": "실리콘 웨이퍼 8인치",
-    "avgProductionTime": 120,
     "yield": 0.92,
-    "stock": 50
+    "name": "실리콘 웨이퍼 8인치",
+    "id": "S001",
+    "avgProductionTime": 120,
+    "stock": 3
   },
   {
-    "id": "S002",
-    "name": "실리콘 웨이퍼 12인치",
-    "avgProductionTime": 180,
     "yield": 0.88,
-    "stock": 30
-  },
-  {
-    "id": "S003",
-    "name": "GaN 에피택시 웨이퍼",
-    "avgProductionTime": 300,
-    "yield": 0.75,
-    "stock": 15
-  },
-  {
-    "id": "S004",
-    "name": "SiC 파워 소자 시료",
-    "avgProductionTime": 240,
-    "yield": 0.80,
+    "name": "실리콘 웨이퍼 12인치",
+    "id": "S002",
+    "avgProductionTime": 180,
     "stock": 20
   },
   {
-    "id": "S005",
-    "name": "MEMS 압력센서 시료",
-    "avgProductionTime": 90,
+    "yield": 0.75,
+    "name": "GaN 에피택시 웨이퍼",
+    "id": "S003",
+    "avgProductionTime": 300,
+    "stock": 15
+  },
+  {
+    "yield": 0.8,
+    "name": "SiC 파워 소자 시료",
+    "id": "S004",
+    "avgProductionTime": 240,
+    "stock": 20
+  },
+  {
     "yield": 0.95,
+    "name": "MEMS 압력센서 시료",
+    "id": "S005",
+    "avgProductionTime": 90,
     "stock": 100
   }
 ]
