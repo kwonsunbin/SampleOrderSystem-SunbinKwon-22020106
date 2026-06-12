@@ -16,8 +16,8 @@
 
 ## 3. Git 활용 및 문서화 규칙 (Commit & Documentation)
 - **문서 관리:** 코드 변경 시 `PRD.md` 및 시스템 명세와의 정렬 상태를 수시로 확인하십시오.
-- **커밋 메시지:** Agentic Engineering 도입 목적에 맞게 변경 사항을 명확히 명시하고 의미 있는 단위로 세분화하여 커밋 이력을 남기십시오. (예: `feat: 구현`, `test: 추가`, `refactor: 리팩토링`)
-- **PR 메시지:** Agentic Engineering 도입 목적에 맞게 변경 사항을 명확히 명시하고 의미 있는 단위로 PR 이력을 남기십시오. (예: `feat: 구현`, `test: 추가`, `refactor: 리팩토링`)
+- **커밋 메시지:** Agentic Engineering 도입 목적에 맞게 변경 사항을 명확히 명시하고 의미 있는 단위로 세분화하여 커밋 이력을 남기십시오. (예: `[feat] 구현`, `[test] 추가`, `[refactor] 리팩토링`)
+- **PR 메시지:** Agentic Engineering 도입 목적에 맞게 변경 사항을 명확히 명시하고 의미 있는 단위로 PR 이력을 남기십시오. (예: `[feat] 구현`, `[test] 추가`, `[refactor] 리팩토링`)
 - **테스트:** 핵심 도메인 로직(특히 재고 분기 처리 및 수율 계산 계산기)에 대한 단위 테스트(Harness/Test)를 작성하십시오.
 
 # Development Workflow
