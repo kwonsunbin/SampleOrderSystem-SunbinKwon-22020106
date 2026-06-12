@@ -3,6 +3,8 @@ package com.ssemi.sampleorder.controller;
 import com.ssemi.sampleorder.model.Sample;
 import com.ssemi.sampleorder.service.SampleService;
 import com.ssemi.sampleorder.view.ConsoleView;
+import com.ssemi.sampleorder.view.MenuView;
+import com.ssemi.sampleorder.view.SampleView;
 
 import java.util.List;
 
@@ -10,19 +12,19 @@ public class SampleController {
 
     private final SampleService sampleService;
     private final ConsoleView consoleView;
+    private final SampleView sampleView;
+    private final MenuView menuView;
 
     public SampleController(SampleService sampleService, ConsoleView consoleView) {
         this.sampleService = sampleService;
-        this.consoleView = consoleView;
+        this.consoleView   = consoleView;
+        this.sampleView    = new SampleView(consoleView);
+        this.menuView      = new MenuView(consoleView);
     }
 
     public void showMenu() {
-        consoleView.print("=== 시료 관리 ===");
-        consoleView.print("1. 시료 등록");
-        consoleView.print("2. 시료 목록");
-        consoleView.print("3. 시료 검색");
-        consoleView.print("0. 뒤로가기");
-        int choice = consoleView.readInt("선택: ");
+        menuView.printSubMenu("[1] 시료 관리", "시료 등록", "시료 목록", "시료 검색");
+        int choice = consoleView.readInt("선택");
         switch (choice) {
             case 1 -> handleRegister();
             case 2 -> handleList();
@@ -33,13 +35,15 @@ public class SampleController {
     }
 
     public void handleRegister() {
-        String name = consoleView.readString("시료명: ");
-        int avgProductionTime = consoleView.readInt("평균 생산시간(분): ");
-        double yield = consoleView.readDouble("수율(0 초과 1 이하): ");
-        int stock = consoleView.readInt("초기 재고: ");
+        consoleView.printBlank();
+        consoleView.printSectionHeader("시료 등록");
+        String name = consoleView.readString("시료명");
+        int avgTime = consoleView.readInt("평균 생산시간 (분/개)");
+        double yield = consoleView.readDouble("수율 (0 초과 ~ 1.0 이하)");
+        int stock = consoleView.readInt("초기 재고 (ea)");
         try {
-            Sample sample = sampleService.register(name, avgProductionTime, yield, stock);
-            consoleView.printSuccess("시료 등록 완료: " + sample.getName() + " (ID: " + sample.getId() + ")");
+            Sample sample = sampleService.register(name, avgTime, yield, stock);
+            sampleView.printRegisterSuccess(sample);
         } catch (Exception e) {
             consoleView.printError(e.getMessage());
         }
@@ -47,24 +51,24 @@ public class SampleController {
 
     public void handleList() {
         List<Sample> samples = sampleService.listSamples();
-        if (samples.isEmpty()) {
-            consoleView.print("등록된 시료가 없습니다.");
-            return;
-        }
-        for (Sample s : samples) {
-            consoleView.print("[" + s.getId() + "] " + s.getName() + " | 재고: " + s.getStock());
+        int page = 0;
+        while (true) {
+            sampleView.printSamplesTable(samples, page);
+            int total = samples.size();
+            int maxPage = (total - 1) / 5;
+            if (page < maxPage) {
+                String input = consoleView.readString("N=다음 페이지, 0=뒤로가기").trim().toUpperCase();
+                if ("N".equals(input)) { page++; continue; }
+            }
+            break;
         }
     }
 
     public void handleSearch() {
-        String keyword = consoleView.readString("검색 키워드: ");
+        consoleView.printBlank();
+        consoleView.printSectionHeader("시료 검색");
+        String keyword = consoleView.readString("검색어");
         List<Sample> results = sampleService.searchSample(keyword);
-        if (results.isEmpty()) {
-            consoleView.print("검색 결과가 없습니다.");
-            return;
-        }
-        for (Sample s : results) {
-            consoleView.print("[" + s.getId() + "] " + s.getName() + " | 재고: " + s.getStock());
-        }
+        sampleView.printSearchResults(results);
     }
 }

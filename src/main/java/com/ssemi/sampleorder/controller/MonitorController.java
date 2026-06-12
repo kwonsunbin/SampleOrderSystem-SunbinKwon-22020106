@@ -4,26 +4,39 @@ import com.ssemi.sampleorder.model.OrderStatus;
 import com.ssemi.sampleorder.service.MonitorService;
 import com.ssemi.sampleorder.service.SampleStockInfo;
 import com.ssemi.sampleorder.view.ConsoleView;
+import com.ssemi.sampleorder.view.MenuView;
+import com.ssemi.sampleorder.view.MonitorView;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
 public class MonitorController {
 
+    private static final DateTimeFormatter DT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
     private final MonitorService monitorService;
     private final ConsoleView consoleView;
+    private final MonitorView monitorView;
+    private final MenuView menuView;
 
     public MonitorController(MonitorService monitorService, ConsoleView consoleView) {
         this.monitorService = monitorService;
-        this.consoleView = consoleView;
+        this.consoleView    = consoleView;
+        this.monitorView    = new MonitorView(consoleView);
+        this.menuView       = new MenuView(consoleView);
     }
 
     public void showMenu() {
-        consoleView.print("=== 모니터링 ===");
-        consoleView.print("1. 주문 집계");
-        consoleView.print("2. 재고 현황");
-        consoleView.print("0. 뒤로가기");
-        int choice = consoleView.readInt("선택: ");
+        consoleView.printBlank();
+        consoleView.print(
+            "  " + "─".repeat(20)
+            + "  " + "모니터링" + "  "
+            + LocalDateTime.now().format(DT)
+            + "  " + "─".repeat(6));
+        menuView.printSubMenu("[4] 모니터링", "주문량 확인", "재고량 확인");
+        int choice = consoleView.readInt("선택");
         switch (choice) {
             case 1 -> handleOrderMonitor();
             case 2 -> handleStockMonitor();
@@ -35,10 +48,7 @@ public class MonitorController {
     public void handleOrderMonitor() {
         try {
             Map<OrderStatus, Long> counts = monitorService.getOrderCountByStatus();
-            consoleView.print("=== 상태별 주문 현황 ===");
-            for (Map.Entry<OrderStatus, Long> entry : counts.entrySet()) {
-                consoleView.print(entry.getKey().name() + ": " + entry.getValue() + "건");
-            }
+            monitorView.printOrderCounts(counts);
         } catch (Exception e) {
             consoleView.printError(e.getMessage());
         }
@@ -47,17 +57,7 @@ public class MonitorController {
     public void handleStockMonitor() {
         try {
             List<SampleStockInfo> infos = monitorService.getStockStatusBySample();
-            if (infos.isEmpty()) {
-                consoleView.print("등록된 시료가 없습니다.");
-                return;
-            }
-            consoleView.print("=== 재고 현황 ===");
-            for (SampleStockInfo info : infos) {
-                consoleView.print("[" + info.getSampleId() + "] " + info.getSampleName()
-                        + " | 재고: " + info.getStock()
-                        + " | 수요: " + info.getDemand()
-                        + " | 상태: " + info.getStockStatus());
-            }
+            monitorView.printStockStatus(infos);
         } catch (Exception e) {
             consoleView.printError(e.getMessage());
         }

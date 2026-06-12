@@ -51,7 +51,8 @@ class OrderControllerTest {
         @DisplayName("입력값으로 reserveOrder() 가 정확한 인수와 함께 1회 호출됨")
         void reserveCallsServiceWithCorrectArgs() {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            OrderController controller = buildController("S001\n서울대\n10\n", outputStream);
+            // 시료 ID, 고객명, 수량, 확인(Y)
+            OrderController controller = buildController("S001\n서울대\n10\nY\n", outputStream);
 
             Order mockOrder = mockOrder("O001", OrderStatus.RESERVED);
             when(orderService.reserveOrder("S001", "서울대", 10)).thenReturn(mockOrder);
@@ -65,7 +66,7 @@ class OrderControllerTest {
         @DisplayName("접수 성공 시 출력에 '접수' 포함")
         void reservePrintsSuccessMessage() {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            OrderController controller = buildController("S001\n서울대\n10\n", outputStream);
+            OrderController controller = buildController("S001\n서울대\n10\nY\n", outputStream);
 
             Order mockOrder = mockOrder("O001", OrderStatus.RESERVED);
             when(orderService.reserveOrder("S001", "서울대", 10)).thenReturn(mockOrder);
@@ -85,7 +86,7 @@ class OrderControllerTest {
     class HandleApprove {
 
         @Test
-        @DisplayName("선택한 orderId 로 approveOrder() 가 1회 호출됨")
+        @DisplayName("선택한 번호에 해당하는 orderId 로 approveOrder() 가 1회 호출됨")
         void approveCallsServiceWithOrderId() {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -95,7 +96,8 @@ class OrderControllerTest {
             Order approvedOrder = mockOrder("O001", OrderStatus.CONFIRMED);
             when(orderService.approveOrder("O001")).thenReturn(approvedOrder);
 
-            OrderController controller = buildController("O001\n", outputStream);
+            // 번호 1 선택, Y 확인
+            OrderController controller = buildController("1\nY\n", outputStream);
             controller.handleApprove();
 
             verify(orderService, times(1)).approveOrder("O001");
@@ -112,7 +114,7 @@ class OrderControllerTest {
             Order approvedOrder = mockOrder("O001", OrderStatus.CONFIRMED);
             when(orderService.approveOrder("O001")).thenReturn(approvedOrder);
 
-            OrderController controller = buildController("O001\n", outputStream);
+            OrderController controller = buildController("1\nY\n", outputStream);
             controller.handleApprove();
 
             String output = outputStream.toString();
@@ -131,7 +133,7 @@ class OrderControllerTest {
             Order producingOrder = mockOrder("O001", OrderStatus.PRODUCING);
             when(orderService.approveOrder("O001")).thenReturn(producingOrder);
 
-            OrderController controller = buildController("O001\n", outputStream);
+            OrderController controller = buildController("1\nY\n", outputStream);
             controller.handleApprove();
 
             String output = outputStream.toString();
@@ -147,7 +149,7 @@ class OrderControllerTest {
     class HandleReject {
 
         @Test
-        @DisplayName("선택한 orderId 로 rejectOrder() 가 1회 호출됨")
+        @DisplayName("선택한 번호에 해당하는 orderId 로 rejectOrder() 가 1회 호출됨")
         void rejectCallsServiceWithOrderId() {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -157,7 +159,8 @@ class OrderControllerTest {
             Order rejectedOrder = mockOrder("O001", OrderStatus.REJECTED);
             when(orderService.rejectOrder("O001")).thenReturn(rejectedOrder);
 
-            OrderController controller = buildController("O001\n", outputStream);
+            // 번호 1 선택
+            OrderController controller = buildController("1\n", outputStream);
             controller.handleReject();
 
             verify(orderService, times(1)).rejectOrder("O001");
@@ -174,7 +177,7 @@ class OrderControllerTest {
             Order rejectedOrder = mockOrder("O001", OrderStatus.REJECTED);
             when(orderService.rejectOrder("O001")).thenReturn(rejectedOrder);
 
-            OrderController controller = buildController("O001\n", outputStream);
+            OrderController controller = buildController("1\n", outputStream);
             controller.handleReject();
 
             String output = outputStream.toString();
@@ -214,7 +217,8 @@ class OrderControllerTest {
             when(orderService.approveOrder("O001"))
                     .thenThrow(new IllegalArgumentException("존재하지 않는 주문입니다: O001"));
 
-            OrderController controller = buildController("O001\n", outputStream);
+            // 번호 1 선택, Y 확인
+            OrderController controller = buildController("1\nY\n", outputStream);
 
             assertDoesNotThrow(controller::handleApprove);
 

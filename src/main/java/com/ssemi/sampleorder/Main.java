@@ -31,20 +31,29 @@ public class Main {
         }
 
         JsonSampleRepository sampleRepo = new JsonSampleRepository(SAMPLES_PATH);
-        JsonOrderRepository orderRepo = new JsonOrderRepository(ORDERS_PATH);
-        ProductionQueue queue = new ProductionQueue();
-        SampleService sampleService = new SampleService(sampleRepo);
-        OrderService orderService = new OrderService(orderRepo, sampleRepo, queue);
+        JsonOrderRepository orderRepo   = new JsonOrderRepository(ORDERS_PATH);
+        ProductionQueue queue           = new ProductionQueue();
+
+        SampleService     sampleService     = new SampleService(sampleRepo);
+        OrderService      orderService      = new OrderService(orderRepo, sampleRepo, queue);
         ProductionService productionService = new ProductionService(orderRepo, sampleRepo, queue);
-        MonitorService monitorService = new MonitorService(orderRepo, sampleRepo);
+        MonitorService    monitorService    = new MonitorService(orderRepo, sampleRepo);
+
         ConsoleView consoleView = new ConsoleView(System.in, System.out);
-        SampleController sampleController = new SampleController(sampleService, consoleView);
-        OrderController orderController = new OrderController(orderService, consoleView);
-        ProductionController productionController = new ProductionController(productionService, consoleView);
-        MonitorController monitorController = new MonitorController(monitorService, consoleView);
-        ReleaseController releaseController = new ReleaseController(orderService, consoleView);
-        MainController mainController = new MainController(sampleController, orderController,
-                productionController, monitorController, releaseController, consoleView);
+
+        SampleController     sampleController     = new SampleController(sampleService, consoleView);
+        OrderController      orderController      = new OrderController(orderService, sampleService,
+                                                        productionService, consoleView);
+        ProductionController productionController = new ProductionController(productionService,
+                                                        sampleService, consoleView);
+        MonitorController    monitorController    = new MonitorController(monitorService, consoleView);
+        ReleaseController    releaseController    = new ReleaseController(orderService, consoleView);
+
+        MainController mainController = new MainController(
+            sampleController, orderController, productionController,
+            monitorController, releaseController, consoleView,
+            sampleService, monitorService
+        );
         mainController.run();
     }
 }

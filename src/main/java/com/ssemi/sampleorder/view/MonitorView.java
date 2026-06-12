@@ -4,73 +4,89 @@ import com.ssemi.sampleorder.model.OrderStatus;
 import com.ssemi.sampleorder.model.StockStatus;
 import com.ssemi.sampleorder.service.SampleStockInfo;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class MonitorView {
 
-    private final ConsoleView consoleView;
+    private final ConsoleView cv;
 
-    public MonitorView(ConsoleView consoleView) {
-        this.consoleView = consoleView;
+    public MonitorView(ConsoleView cv) {
+        this.cv = cv;
     }
 
     public void printOrderCounts(Map<OrderStatus, Long> counts) {
-        consoleView.printBlank();
-        consoleView.print(Color.header("  ◆ 상태별 주문 현황"));
-        consoleView.printDivider();
+        cv.printBlank();
+        cv.printSectionHeader("상태별 주문 현황");
         if (counts.isEmpty()) {
-            consoleView.print(Color.dim("    주문 데이터가 없습니다."));
-            consoleView.printDivider();
+            cv.print(Color.dim("    주문 데이터가 없습니다."));
+            cv.printBlank();
             return;
         }
-        for (Map.Entry<OrderStatus, Long> entry : counts.entrySet()) {
-            consoleView.print(
-                "    " + statusBadge(entry.getKey())
-                + "  " + Color.BRIGHT_WHITE + entry.getValue() + "건" + Color.RESET
-            );
+
+        OrderStatus[] order = {
+            OrderStatus.RESERVED, OrderStatus.PRODUCING,
+            OrderStatus.CONFIRMED, OrderStatus.RELEASED
+        };
+        for (OrderStatus status : order) {
+            long cnt = counts.getOrDefault(status, 0L);
+            String badge = statusBadge(status);
+            String count = Color.BRIGHT_WHITE + String.format("%3d 건", cnt) + Color.RESET;
+            String note  = statusNote(status, cnt);
+            cv.print("    " + badge + "  " + count + (note.isEmpty() ? "" : "  " + note));
         }
-        consoleView.printDivider();
+        cv.printBlank();
     }
 
     public void printStockStatus(List<SampleStockInfo> infos) {
-        consoleView.printBlank();
-        consoleView.print(Color.header("  ◆ 재고 현황"));
-        consoleView.printDivider();
+        cv.printBlank();
+        cv.printSectionHeader("재고 현황");
         if (infos.isEmpty()) {
-            consoleView.print(Color.dim("    등록된 시료가 없습니다."));
-            consoleView.printDivider();
+            cv.print(Color.dim("    등록된 시료가 없습니다."));
+            cv.printBlank();
             return;
         }
+
+        int[] cols = {10, 20, 8, 8, 6};
+        String[] hdr = {"ID", "시료명", "재고", "수요", "상태"};
+        List<String[]> rows = new ArrayList<>();
         for (SampleStockInfo info : infos) {
-            consoleView.print(
-                "  " + Color.YELLOW + "[" + info.getSampleId() + "]" + Color.RESET
-                + "  " + Color.bold(info.getSampleName())
-                + "  " + Color.dim("재고:") + " " + Color.BRIGHT_WHITE + info.getStock() + Color.RESET
-                + "  " + Color.dim("수요:") + " " + Color.BRIGHT_WHITE + info.getDemand() + Color.RESET
-                + "  " + stockStatusBadge(info.getStockStatus())
-            );
+            String id = info.getSampleId();
+            rows.add(new String[]{
+                id.length() > 10 ? "…" + id.substring(id.length() - 9) : id,
+                info.getSampleName(),
+                info.getStock() + " ea",
+                info.getDemand() > 0 ? info.getDemand() + " ea" : "-",
+                stockLabel(info.getStockStatus())
+            });
         }
-        consoleView.printDivider();
+        cv.printTable(cols, hdr, rows);
+        cv.printBlank();
     }
 
-    private String statusBadge(OrderStatus status) {
-        switch (status) {
-            case RESERVED:   return Color.BRIGHT_YELLOW + "[RESERVED ]" + Color.RESET;
-            case REJECTED:   return Color.BRIGHT_RED    + "[REJECTED ]" + Color.RESET;
-            case PRODUCING:  return Color.BRIGHT_CYAN   + "[PRODUCING]" + Color.RESET;
-            case CONFIRMED:  return Color.BLUE          + "[CONFIRMED]" + Color.RESET;
-            case RELEASED:   return Color.BRIGHT_GREEN  + "[RELEASED ]" + Color.RESET;
-            default:         return Color.WHITE         + "[" + status.name() + "]" + Color.RESET;
+    private String statusBadge(OrderStatus s) {
+        switch (s) {
+            case RESERVED:  return Color.BRIGHT_YELLOW + "RESERVED " + Color.RESET;
+            case PRODUCING: return Color.BRIGHT_CYAN   + "PRODUCING" + Color.RESET;
+            case CONFIRMED: return Color.BLUE          + "CONFIRMED" + Color.RESET;
+            case RELEASED:  return Color.BRIGHT_GREEN  + "RELEASED " + Color.RESET;
+            default:        return Color.WHITE + s.name() + Color.RESET;
         }
     }
 
-    private String stockStatusBadge(StockStatus status) {
-        switch (status) {
-            case SUFFICIENT:  return Color.BRIGHT_GREEN  + "[충분]" + Color.RESET;
-            case SHORTAGE:    return Color.BRIGHT_YELLOW + "[부족]" + Color.RESET;
-            case DEPLETED:    return Color.BRIGHT_RED    + "[고갈]" + Color.RESET;
-            default:          return Color.WHITE         + "[" + status.name() + "]" + Color.RESET;
+    private String statusNote(OrderStatus s, long cnt) {
+        if (s == OrderStatus.PRODUCING && cnt > 0)
+            return Color.dim("← 생산라인 대기");
+        return "";
+    }
+
+    private String stockLabel(StockStatus s) {
+        switch (s) {
+            case SUFFICIENT: return Color.BRIGHT_GREEN  + "여유" + Color.RESET;
+            case SHORTAGE:   return Color.BRIGHT_YELLOW + "부족" + Color.RESET;
+            case DEPLETED:   return Color.BRIGHT_RED    + "고갈" + Color.RESET;
+            default:         return s.name();
         }
     }
 }
