@@ -5,25 +5,33 @@ import com.ssemi.sampleorder.repository.OrderRepository;
 import com.ssemi.sampleorder.repository.SampleRepository;
 
 import java.util.List;
-import java.util.UUID;
 
 public class OrderService {
 
     private final OrderRepository orderRepository;
     private final SampleRepository sampleRepository;
     private final ProductionQueue productionQueue;
+    private final OrderIdGenerator idGenerator;
 
     public OrderService(OrderRepository orderRepository,
                         SampleRepository sampleRepository,
                         ProductionQueue productionQueue) {
+        this(orderRepository, sampleRepository, productionQueue,
+             new OrderIdGenerator(orderRepository));
+    }
+
+    public OrderService(OrderRepository orderRepository,
+                        SampleRepository sampleRepository,
+                        ProductionQueue productionQueue,
+                        OrderIdGenerator idGenerator) {
         this.orderRepository = orderRepository;
         this.sampleRepository = sampleRepository;
         this.productionQueue = productionQueue;
+        this.idGenerator = idGenerator;
     }
 
     public Order reserveOrder(String sampleId, String customerName, int quantity) {
-        // Order 생성자가 customerName blank/null, quantity<=0 유효성 검증 수행
-        Order order = new Order(UUID.randomUUID().toString(), sampleId, customerName, quantity);
+        Order order = new Order(idGenerator.generate(), sampleId, customerName, quantity);
         orderRepository.save(order);
         return order;
     }
