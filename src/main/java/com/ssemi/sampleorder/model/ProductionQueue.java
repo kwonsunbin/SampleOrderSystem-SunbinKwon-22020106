@@ -1,7 +1,9 @@
 package com.ssemi.sampleorder.model;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 public class ProductionQueue {
@@ -26,6 +28,7 @@ public class ProductionQueue {
         return queue.peekFirst();
     }
 
+    public List<Order> toList() { return new ArrayList<>(queue); }
     public boolean isEmpty() { return queue.isEmpty(); }
     public int size() { return queue.size(); }
 }
