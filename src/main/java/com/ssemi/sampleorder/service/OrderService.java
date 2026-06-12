@@ -68,4 +68,21 @@ public class OrderService {
     public List<Order> listReservedOrders() {
         return orderRepository.findByStatus(OrderStatus.RESERVED);
     }
+
+    public List<Order> listConfirmedOrders() {
+        return orderRepository.findByStatus(OrderStatus.CONFIRMED);
+    }
+
+    public Order releaseOrder(String orderId) {
+        if (orderId == null) throw new IllegalArgumentException("orderId는 null일 수 없습니다.");
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주문입니다: " + orderId));
+
+        if (order.getStatus() != OrderStatus.CONFIRMED)
+            throw new IllegalStateException("CONFIRMED 상태의 주문만 출고할 수 있습니다. 현재 상태: " + order.getStatus());
+
+        order.transitionTo(OrderStatus.RELEASED);
+        orderRepository.save(order);
+        return order;
+    }
 }
