@@ -13,18 +13,27 @@ public class ReleaseView {
     }
 
     public void printConfirmedOrders(List<Order> orders) {
+        consoleView.printBlank();
+        consoleView.print(Color.header("  ◆ 출고 대기 주문"));
+        consoleView.printDivider();
         if (orders.isEmpty()) {
-            consoleView.print("출고 대기 중인 주문이 없습니다.");
+            consoleView.print(Color.dim("    출고 대기 중인 주문이 없습니다."));
+            consoleView.printDivider();
             return;
         }
         for (Order order : orders) {
-            consoleView.print("[" + order.getId() + "] 고객: " + order.getCustomerName()
-                    + " | 수량: " + order.getQuantity()
-                    + " | 상태: " + order.getStatus());
+            consoleView.print(
+                "  " + Color.BLUE + "[" + order.getId() + "]" + Color.RESET
+                + "  " + Color.dim("고객:") + " " + Color.bold(order.getCustomerName())
+                + "  " + Color.dim("수량:") + " " + Color.BRIGHT_WHITE + order.getQuantity() + Color.RESET
+                + "  " + Color.BLUE + "[" + order.getStatus().name() + "]" + Color.RESET
+            );
         }
+        consoleView.printDivider();
     }
 
     public void printReleaseResult(Order order) {
-        consoleView.printSuccess("출고 완료 - 주문ID: " + order.getId() + " | 상태: " + order.getStatus());
+        consoleView.printSuccess("출고 완료  주문ID: " + order.getId()
+                + "  상태: " + order.getStatus().name());
     }
 }

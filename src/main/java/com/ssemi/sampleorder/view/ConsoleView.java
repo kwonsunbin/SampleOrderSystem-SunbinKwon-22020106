@@ -15,41 +15,53 @@ public class ConsoleView {
     }
 
     public String readString(String prompt) {
-        out.println(prompt);
+        out.print(Color.CYAN + "  ▶ " + Color.RESET + prompt + " : ");
         return scanner.nextLine();
     }
 
     public int readInt(String prompt) {
-        out.println(prompt);
+        out.print(Color.CYAN + "  ▶ " + Color.RESET + prompt + " : ");
         String line = scanner.nextLine();
         try {
             return Integer.parseInt(line.trim());
         } catch (NumberFormatException e) {
-            out.println("잘못된 입력입니다.");
+            out.println(Color.error("  [오류] 숫자를 입력해 주세요."));
             return -1;
         }
     }
 
     public double readDouble(String prompt) {
-        out.println(prompt);
+        out.print(Color.CYAN + "  ▶ " + Color.RESET + prompt + " : ");
         String line = scanner.nextLine();
         try {
             return Double.parseDouble(line.trim());
         } catch (NumberFormatException e) {
-            out.println("잘못된 입력입니다.");
+            out.println(Color.error("  [오류] 숫자를 입력해 주세요."));
             return -1.0;
         }
     }
 
     public void printSuccess(String msg) {
-        out.println("[완료] " + msg);
+        out.println();
+        out.println(Color.success("  ✔  " + msg));
+        out.println();
     }
 
     public void printError(String msg) {
-        out.println("[오류] " + msg);
+        out.println();
+        out.println(Color.error("  ✖  " + msg));
+        out.println();
     }
 
     public void print(String msg) {
         out.println(msg);
+    }
+
+    public void printBlank() {
+        out.println();
+    }
+
+    public void printDivider() {
+        out.println(Color.dim("  " + "─".repeat(56)));
     }
 }
