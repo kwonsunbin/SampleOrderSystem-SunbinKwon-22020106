@@ -176,10 +176,10 @@ class IntegrationTest {
         }
 
         @Test
-        @DisplayName("재고 충분 시 승인하면 시료 재고가 주문 수량만큼 차감된다")
+        @DisplayName("재고 충분 시 승인하면 재고 차감 없음 (출고 시 차감)")
         void sufficientStockApproveReducesStock() {
             orderService.approveOrder(order.getId());
-            assertEquals(90, sampleRepo.findById(sample.getId()).get().getStock());
+            assertEquals(100, sampleRepo.findById(sample.getId()).get().getStock());
         }
 
         @Test

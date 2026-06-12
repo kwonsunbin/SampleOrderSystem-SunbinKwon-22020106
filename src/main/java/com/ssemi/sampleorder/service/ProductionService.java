@@ -54,7 +54,6 @@ public class ProductionService {
             int actualProduction = calculateActualProduction(shortage, sample.getYield());
             sample.addStock(actualProduction);
         }
-        sample.reduceStock(order.getQuantity());
         order.transitionTo(OrderStatus.CONFIRMED);
 
         sampleRepository.save(sample);
@@ -125,7 +124,6 @@ public class ProductionService {
             int actualProduction = calculateActualProduction(shortage, sample.getYield());
             sample.addStock(actualProduction);
         }
-        sample.reduceStock(order.getQuantity());
         order.transitionTo(OrderStatus.CONFIRMED);
 
         sampleRepository.save(sample);

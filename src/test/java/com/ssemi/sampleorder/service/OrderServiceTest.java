@@ -102,17 +102,17 @@ class OrderServiceTest {
         }
 
         @Test
-        @DisplayName("재고 충분 → 재고 정확히 차감됨")
+        @DisplayName("재고 충분 → approve 시 재고 차감 없음 (출고 시 차감)")
         void approveDeductsStockExactly() {
             Order order = orderService.reserveOrder(sampleId, "고객A", 10);
 
             orderService.approveOrder(order.getId());
 
-            assertEquals(40, sampleRepo.findById(sampleId).get().getStock());
+            assertEquals(50, sampleRepo.findById(sampleId).get().getStock());
         }
 
         @Test
-        @DisplayName("재고 == 주문량 경계값 → CONFIRMED + stock == 0")
+        @DisplayName("재고 == 주문량 경계값 → CONFIRMED + stock 차감은 출고 시")
         void approveWhenStockExactlyEqualsDemand() {
             sampleRepo.save(new Sample("S002", "InP", 60, 0.9, 10));
             Order order = orderService.reserveOrder("S002", "고객A", 10);
@@ -121,7 +121,7 @@ class OrderServiceTest {
 
             assertEquals(OrderStatus.CONFIRMED,
                     orderRepo.findById(order.getId()).get().getStatus());
-            assertEquals(0, sampleRepo.findById("S002").get().getStock());
+            assertEquals(10, sampleRepo.findById("S002").get().getStock());
         }
 
         @Test

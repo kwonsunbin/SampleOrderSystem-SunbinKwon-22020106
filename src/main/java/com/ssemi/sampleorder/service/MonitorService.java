@@ -41,8 +41,9 @@ public class MonitorService {
     }
 
     public List<SampleStockInfo> getStockStatusBySample() {
-        Map<String, Integer> demandBySample = orderRepository.findByStatus(OrderStatus.PRODUCING)
-                .stream()
+        Map<String, Integer> demandBySample = orderRepository.findAll().stream()
+                .filter(o -> o.getStatus() == OrderStatus.PRODUCING
+                          || o.getStatus() == OrderStatus.CONFIRMED)
                 .collect(Collectors.groupingBy(Order::getSampleId,
                         Collectors.summingInt(Order::getQuantity)));
 

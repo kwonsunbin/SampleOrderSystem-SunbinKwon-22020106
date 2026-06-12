@@ -47,10 +47,14 @@ public class OrderService {
         Sample sample = sampleRepository.findById(order.getSampleId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 시료입니다: " + order.getSampleId()));
 
-        if (sample.getStock() >= order.getQuantity()) {
-            sample.reduceStock(order.getQuantity());
+        int reservedByConfirmed = orderRepository.findByStatus(OrderStatus.CONFIRMED).stream()
+                .filter(o -> o.getSampleId().equals(order.getSampleId()))
+                .mapToInt(Order::getQuantity)
+                .sum();
+        int availableStock = sample.getStock() - reservedByConfirmed;
+
+        if (availableStock >= order.getQuantity()) {
             order.transitionTo(OrderStatus.CONFIRMED);
-            sampleRepository.save(sample);
         } else {
             order.transitionTo(OrderStatus.PRODUCING);
             productionQueue.enqueue(order);
@@ -89,7 +93,12 @@ public class OrderService {
         if (order.getStatus() != OrderStatus.CONFIRMED)
             throw new IllegalStateException("CONFIRMED 상태의 주문만 출고할 수 있습니다. 현재 상태: " + order.getStatus());
 
+        Sample sample = sampleRepository.findById(order.getSampleId())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 시료입니다: " + order.getSampleId()));
+
+        sample.reduceStock(order.getQuantity());
         order.transitionTo(OrderStatus.RELEASED);
+        sampleRepository.save(sample);
         orderRepository.save(order);
         return order;
     }
