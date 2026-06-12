@@ -1,5 +1,10 @@
 plugins {
     id("java")
+    application
+}
+
+application {
+    mainClass.set("com.ssemi.sampleorder.Main")
 }
 
 group = "org.example"
@@ -10,11 +15,27 @@ repositories {
 }
 
 dependencies {
+    implementation("org.json:json:20240303")
     testImplementation(platform("org.junit:junit-bom:6.0.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.11.0")
 }
 
 tasks.test {
     useJUnitPlatform()
+}
+
+tasks.named<JavaExec>("run") {
+    standardInput = System.`in`
+}
+
+tasks.register<JavaExec>("runClean") {
+    description = "기존 영속성 데이터를 초기화하고 앱을 실행합니다."
+    group = "application"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("com.ssemi.sampleorder.Main")
+    args("--clean")
+    standardInput = System.`in`
 }
