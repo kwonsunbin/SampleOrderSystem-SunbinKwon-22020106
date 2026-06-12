@@ -82,6 +82,11 @@ public class JsonOrderRepository implements OrderRepository {
         JsonFileUtil.writeArray(filePath, updated);
     }
 
+    @Override
+    public void deleteAll() {
+        JsonFileUtil.writeArray(filePath, new JSONArray());
+    }
+
     private JSONObject toJson(Order o) {
         return new JSONObject()
                 .put("id", o.getId())

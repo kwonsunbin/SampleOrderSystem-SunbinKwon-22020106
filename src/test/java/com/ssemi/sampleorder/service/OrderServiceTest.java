@@ -311,5 +311,6 @@ class OrderServiceTest {
             return store.values().stream().filter(o -> o.getStatus() == s).collect(Collectors.toList());
         }
         @Override public void delete(String id) { store.remove(id); }
+        @Override public void deleteAll() { store.clear(); }
     }
 }
