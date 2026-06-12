@@ -36,7 +36,7 @@ public class ProductionService {
         return (int) result;
     }
 
-    // 총 생산시간 = 평균 생산시간 * 실 생산량
+    // 총 생산시간(초) = 평균 생산시간(초) * 실 생산량
     public int calculateTotalProductionTime(int avgProductionTime, int actualProduction) {
         return avgProductionTime * actualProduction;
     }
@@ -81,15 +81,15 @@ public class ProductionService {
         int unitsToMake = shortage > 0
                 ? calculateActualProduction(shortage, sample.getYield())
                 : order.getQuantity();
-        int totalMinutes = calculateTotalProductionTime(sample.getAvgProductionTime(), unitsToMake);
+        int totalSeconds = calculateTotalProductionTime(sample.getAvgProductionTime(), unitsToMake);
 
         order.transitionTo(OrderStatus.PRODUCING);
-        order.startProduction(LocalDateTime.now(clock), totalMinutes);
+        order.startProduction(LocalDateTime.now(clock), totalSeconds);
         orderRepository.save(order);
         return order;
     }
 
-    // 경과 시간 체크 후 생산 완료 처리: PRODUCING → CONFIRMED, 재고 반영
+    // 경과 시간(초) 체크 후 생산 완료 처리: PRODUCING → CONFIRMED, 재고 반영
     public void completeProductionIfReady(Clock clock) {
         List<Order> producing = orderRepository.findByStatus(OrderStatus.PRODUCING);
         if (producing.isEmpty()) return;
@@ -98,8 +98,8 @@ public class ProductionService {
         LocalDateTime startedAt = order.getProductionStartedAt();
         if (startedAt == null) return;
 
-        long elapsed = Duration.between(startedAt, LocalDateTime.now(clock)).toMinutes();
-        if (elapsed < order.getTotalProductionMinutes()) return;
+        long elapsed = Duration.between(startedAt, LocalDateTime.now(clock)).toSeconds();
+        if (elapsed < order.getTotalProductionSeconds()) return;
 
         Sample sample = sampleRepository.findById(order.getSampleId())
                 .orElseThrow(() -> new IllegalArgumentException("시료를 찾을 수 없습니다: " + order.getSampleId()));
@@ -127,10 +127,10 @@ public class ProductionService {
 
         LocalDateTime startedAt = order.getProductionStartedAt();
         LocalDateTime now = LocalDateTime.now(clock);
-        long elapsed = startedAt != null ? Duration.between(startedAt, now).toMinutes() : 0;
-        int total = order.getTotalProductionMinutes();
+        long elapsed = startedAt != null ? Duration.between(startedAt, now).toSeconds() : 0;
+        int total = order.getTotalProductionSeconds();
         int progressPercent = total > 0 ? (int) Math.min(100, elapsed * 100 / total) : 0;
-        LocalDateTime eta = startedAt != null ? startedAt.plusMinutes(total) : now;
+        LocalDateTime eta = startedAt != null ? startedAt.plusSeconds(total) : now;
 
         int shortage = Math.max(0, order.getQuantity() - sample.getStock());
         int actualProduction = shortage > 0

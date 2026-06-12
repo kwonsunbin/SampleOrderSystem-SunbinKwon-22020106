@@ -18,7 +18,7 @@ import java.util.Optional;
 
 public class ProductionController {
 
-    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
+    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     private final ProductionService productionService;
     private final SampleService sampleService;
@@ -116,7 +116,7 @@ public class ProductionController {
                 int unitsToMake = actualProd > 0 ? actualProd : o.getQuantity();
                 int totalTime   = productionService.calculateTotalProductionTime(
                         s.getAvgProductionTime(), unitsToMake);
-                cursor = cursor.plusMinutes(totalTime);
+                cursor = cursor.plusSeconds(totalTime);
                 rows.add(new String[]{
                         String.valueOf(i + 1),
                         shortId(o.getId()),
@@ -154,7 +154,7 @@ public class ProductionController {
                         o.getQuantity() + " ea",
                         shortage > 0 ? shortage + " ea" : "-",
                         actualProd > 0 ? actualProd + " ea" : "-",
-                        totalTime + " 분"
+                        totalTime + " 초"
                 });
             } catch (Exception e) {
                 rows.add(new String[]{

@@ -56,7 +56,7 @@ public class Main {
         MainController mainController = new MainController(
             sampleController, orderController, productionController,
             monitorController, releaseController, consoleView,
-            sampleService, monitorService
+            sampleService, monitorService, productionService
         );
         mainController.run();
     }

@@ -183,9 +183,9 @@ class OrderTest {
         }
 
         @Test
-        @DisplayName("생성 직후 totalProductionMinutes는 0")
-        void initialTotalProductionMinutesIsZero() {
-            assertEquals(0, order.getTotalProductionMinutes());
+        @DisplayName("생성 직후 totalProductionSeconds는 0")
+        void initialTotalProductionSecondsIsZero() {
+            assertEquals(0, order.getTotalProductionSeconds());
         }
 
         @Test
@@ -198,11 +198,11 @@ class OrderTest {
         }
 
         @Test
-        @DisplayName("startProduction → totalProductionMinutes 기록됨")
-        void startProductionRecordsTotalMinutes() {
+        @DisplayName("startProduction → totalProductionSeconds 기록됨")
+        void startProductionRecordsTotalSeconds() {
             order.transitionTo(OrderStatus.PRODUCING);
             order.startProduction(LocalDateTime.of(2026, 6, 12, 9, 0), 120);
-            assertEquals(120, order.getTotalProductionMinutes());
+            assertEquals(120, order.getTotalProductionSeconds());
         }
 
         @Test

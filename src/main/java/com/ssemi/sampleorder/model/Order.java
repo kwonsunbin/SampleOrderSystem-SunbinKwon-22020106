@@ -22,7 +22,7 @@ public class Order {
     private OrderStatus status;
 
     private LocalDateTime productionStartedAt;
-    private int totalProductionMinutes;
+    private int totalProductionSeconds;
 
     public Order(String id, String sampleId, String customerName, int quantity) {
         if (customerName == null || customerName.isBlank())
@@ -41,7 +41,7 @@ public class Order {
     // JSON 역직렬화 전용 — status, createdAt, 생산 시간 필드를 직접 복원
     public Order(String id, String sampleId, String customerName, int quantity,
                  OrderStatus status, LocalDateTime createdAt,
-                 LocalDateTime productionStartedAt, int totalProductionMinutes) {
+                 LocalDateTime productionStartedAt, int totalProductionSeconds) {
         if (customerName == null || customerName.isBlank())
             throw new IllegalArgumentException("customerName은 null이거나 공백일 수 없습니다.");
         if (quantity <= 0)
@@ -54,7 +54,7 @@ public class Order {
         this.status = status;
         this.createdAt = createdAt;
         this.productionStartedAt = productionStartedAt;
-        this.totalProductionMinutes = totalProductionMinutes;
+        this.totalProductionSeconds = totalProductionSeconds;
     }
 
     // 하위 호환 — 기존 JSON에 productionStartedAt 없는 경우
@@ -72,11 +72,11 @@ public class Order {
         this.status = next;
     }
 
-    public void startProduction(LocalDateTime startedAt, int totalMinutes) {
+    public void startProduction(LocalDateTime startedAt, int totalSeconds) {
         if (this.status != OrderStatus.PRODUCING)
             throw new IllegalStateException("PRODUCING 상태에서만 생산을 시작할 수 있습니다. 현재: " + this.status);
         this.productionStartedAt = startedAt;
-        this.totalProductionMinutes = totalMinutes;
+        this.totalProductionSeconds = totalSeconds;
     }
 
     public String getId() { return id; }
@@ -86,5 +86,5 @@ public class Order {
     public OrderStatus getStatus() { return status; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getProductionStartedAt() { return productionStartedAt; }
-    public int getTotalProductionMinutes() { return totalProductionMinutes; }
+    public int getTotalProductionSeconds() { return totalProductionSeconds; }
 }

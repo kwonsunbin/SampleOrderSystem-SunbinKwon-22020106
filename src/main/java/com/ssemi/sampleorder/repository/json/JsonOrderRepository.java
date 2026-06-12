@@ -95,7 +95,7 @@ public class JsonOrderRepository implements OrderRepository {
                 .put("quantity", o.getQuantity())
                 .put("status", o.getStatus().name())
                 .put("createdAt", o.getCreatedAt().withNano(0).toString())
-                .put("totalProductionMinutes", o.getTotalProductionMinutes());
+                .put("totalProductionSeconds", o.getTotalProductionSeconds());
         if (o.getProductionStartedAt() != null)
             obj.put("productionStartedAt", o.getProductionStartedAt().withNano(0).toString());
         return obj;
@@ -105,7 +105,10 @@ public class JsonOrderRepository implements OrderRepository {
         LocalDateTime productionStartedAt = j.has("productionStartedAt") && !j.isNull("productionStartedAt")
                 ? LocalDateTime.parse(j.getString("productionStartedAt"))
                 : null;
-        int totalProductionMinutes = j.optInt("totalProductionMinutes", 0);
+        // 구 포맷(totalProductionMinutes) 하위 호환 처리
+        int totalProductionSeconds = j.has("totalProductionSeconds")
+                ? j.getInt("totalProductionSeconds")
+                : j.optInt("totalProductionMinutes", 0);
         return new Order(
                 j.getString("id"),
                 j.getString("sampleId"),
@@ -114,7 +117,7 @@ public class JsonOrderRepository implements OrderRepository {
                 OrderStatus.valueOf(j.getString("status")),
                 LocalDateTime.parse(j.getString("createdAt")),
                 productionStartedAt,
-                totalProductionMinutes
+                totalProductionSeconds
         );
     }
 }
