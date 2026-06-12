@@ -1,5 +1,10 @@
 plugins {
     id("java")
+    application
+}
+
+application {
+    mainClass.set("com.ssemi.sampleorder.Main")
 }
 
 group = "org.example"
@@ -20,4 +25,8 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+tasks.named<JavaExec>("run") {
+    standardInput = System.`in`
 }
