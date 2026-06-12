@@ -28,7 +28,12 @@ public class ReleaseController {
         orderView.printConfirmedOrders(confirmed);
         if (confirmed.isEmpty()) return;
 
-        String orderId = consoleView.readString("출고할 주문 ID");
+        int num = consoleView.readInt("출고할 번호");
+        if (num < 1 || num > confirmed.size()) {
+            consoleView.printError("올바른 번호를 입력하세요.");
+            return;
+        }
+        String orderId = confirmed.get(num - 1).getId();
         try {
             Order result = orderService.releaseOrder(orderId);
             orderView.printReleaseResult(result);

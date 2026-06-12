@@ -5,6 +5,7 @@ import com.ssemi.sampleorder.model.Sample;
 import com.ssemi.sampleorder.service.ProductionProgressInfo;
 import com.ssemi.sampleorder.service.ProductionService;
 import com.ssemi.sampleorder.service.SampleService;
+import com.ssemi.sampleorder.view.Color;
 import com.ssemi.sampleorder.view.ConsoleView;
 import com.ssemi.sampleorder.view.MenuView;
 import com.ssemi.sampleorder.view.ProductionView;
@@ -43,6 +44,12 @@ public class ProductionController {
     public void showMenu() {
         Clock clock = Clock.systemDefaultZone();
         productionService.completeProductionIfReady(clock);
+
+        // 생산 중이면 완료될 때까지 1초마다 진행률 갱신
+        if (productionService.getCurrentlyProducingInfo(clock).isPresent()) {
+            watchLiveProgress(clock);
+        }
+
         handleViewProductionLine(clock);
         menuView.printSubMenu("[5] 생산라인 조회", "다음 주문 생산 시작");
         int choice = consoleView.readInt("선택");
@@ -50,6 +57,27 @@ public class ProductionController {
             case 1 -> handleStartProduction(clock);
             case 0 -> {}
             default -> consoleView.printError("잘못된 선택입니다.");
+        }
+    }
+
+    private void watchLiveProgress(Clock clock) {
+        while (true) {
+            productionService.completeProductionIfReady(clock);
+            Optional<ProductionProgressInfo> info = productionService.getCurrentlyProducingInfo(clock);
+            if (info.isEmpty()) {
+                consoleView.clearScreen();
+                consoleView.printSuccess("생산 완료  CONFIRMED");
+                break;
+            }
+            consoleView.clearScreen();
+            productionView.printCurrentlyProducing(info.get());
+            consoleView.print(Color.dim("  생산 완료 시 자동으로 메뉴가 표시됩니다..."));
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
         }
     }
 

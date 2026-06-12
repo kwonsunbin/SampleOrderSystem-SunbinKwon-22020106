@@ -94,7 +94,7 @@ public class OrderView {
             printBoxLine("재고 부족", Color.BRIGHT_RED + shortage + " ea 부족" + Color.RESET, bw);
             printBoxLine("실 생산량", Color.BRIGHT_CYAN + actualProd + " ea" + Color.RESET
                     + Color.dim("  (수율 보정 생산)"), bw);
-            printBoxLine("예상 시간", Color.BRIGHT_YELLOW + totalTime + " 분" + Color.RESET, bw);
+            printBoxLine("예상 시간", Color.BRIGHT_YELLOW + totalTime + " 초" + Color.RESET, bw);
         }
         cv.print("  " + Color.DIM + "└" + "─".repeat(bw) + "┘" + Color.RESET);
         cv.printBlank();

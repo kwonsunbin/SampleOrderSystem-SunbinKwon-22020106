@@ -96,7 +96,23 @@ public class ProductionService {
 
         Order order = producing.get(0);
         LocalDateTime startedAt = order.getProductionStartedAt();
-        if (startedAt == null) return;
+
+        // startedAt 없는 주문은 지금 시점으로 자동 초기화 (in-memory 큐에서도 제거)
+        if (startedAt == null) {
+            if (!productionQueue.isEmpty() && productionQueue.peek().getId().equals(order.getId())) {
+                productionQueue.dequeue();
+            }
+            Sample sample = sampleRepository.findById(order.getSampleId())
+                    .orElseThrow(() -> new IllegalArgumentException("시료를 찾을 수 없습니다: " + order.getSampleId()));
+            int shortage = Math.max(0, order.getQuantity() - sample.getStock());
+            int unitsToMake = shortage > 0
+                    ? calculateActualProduction(shortage, sample.getYield())
+                    : order.getQuantity();
+            int totalSeconds = calculateTotalProductionTime(sample.getAvgProductionTime(), unitsToMake);
+            order.startProduction(LocalDateTime.now(clock), totalSeconds);
+            orderRepository.save(order);
+            return;
+        }
 
         long elapsed = Duration.between(startedAt, LocalDateTime.now(clock)).toSeconds();
         if (elapsed < order.getTotalProductionSeconds()) return;

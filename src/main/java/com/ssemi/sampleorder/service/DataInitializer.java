@@ -9,11 +9,11 @@ import java.util.List;
 public class DataInitializer {
 
     private static final List<Sample> SEED_SAMPLES = List.of(
-        new Sample("S001", "실리콘 웨이퍼 8인치",  120, 0.92, 3),
-        new Sample("S002", "실리콘 웨이퍼 12인치", 180, 0.88, 20),
-        new Sample("S003", "GaN 에피택시 웨이퍼",  300, 0.75, 15),
-        new Sample("S004", "SiC 파워 소자 시료",   240, 0.80, 20),
-        new Sample("S005", "MEMS 압력센서 시료",    90, 0.95, 100)
+        new Sample("S001", "실리콘 웨이퍼 8인치",   3, 0.92,  1),
+        new Sample("S002", "실리콘 웨이퍼 12인치",  3, 0.88,  6),
+        new Sample("S003", "GaN 에피택시 웨이퍼",   4, 0.75, 15),
+        new Sample("S004", "SiC 파워 소자 시료",    3, 0.80, 20),
+        new Sample("S005", "MEMS 압력센서 시료",    2, 0.95,  9)
     );
 
     private final SampleRepository sampleRepository;

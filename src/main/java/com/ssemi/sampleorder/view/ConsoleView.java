@@ -136,4 +136,9 @@ public class ConsoleView {
         out.println(Color.BOLD + Color.BRIGHT_CYAN + "  ◆ " + title + Color.RESET);
         printDivider();
     }
+
+    public void clearScreen() {
+        out.print("\033[2J\033[H");
+        out.flush();
+    }
 }

@@ -38,7 +38,7 @@ public class SampleController {
         consoleView.printBlank();
         consoleView.printSectionHeader("시료 등록");
         String name = consoleView.readString("시료명");
-        int avgTime = consoleView.readInt("평균 생산시간 (분/개)");
+        int avgTime = consoleView.readInt("평균 생산시간 (초/개)");
         double yield = consoleView.readDouble("수율 (0 초과 ~ 1.0 이하)");
         int stock = consoleView.readInt("초기 재고 (ea)");
         try {
