@@ -36,4 +36,10 @@ public class SampleService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 시료입니다: " + sampleId))
                 .getStock();
     }
+
+    public Sample getSample(String sampleId) {
+        if (sampleId == null) throw new IllegalArgumentException("sampleId는 null일 수 없습니다.");
+        return sampleRepository.findById(sampleId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 시료입니다: " + sampleId));
+    }
 }
