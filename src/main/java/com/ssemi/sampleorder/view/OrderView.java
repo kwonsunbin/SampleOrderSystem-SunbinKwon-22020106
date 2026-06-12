@@ -174,6 +174,7 @@ public class OrderView {
     }
 
     private String shortId(String id) {
+        if (id.startsWith("ORD-")) return id;
         return id.length() > 13 ? "…" + id.substring(id.length() - 12) : id;
     }
 

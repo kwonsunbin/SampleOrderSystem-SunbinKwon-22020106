@@ -1,50 +1,26 @@
 [
   {
-    "createdAt": "2026-06-12T13:49:39",
-    "quantity": 1,
-    "sampleId": "1",
-    "id": "c3bcd5f2-434d-48f3-a7d1-397b3f9eb0b1",
-    "customerName": "1",
-    "status": "REJECTED"
-  },
-  {
-    "createdAt": "2026-06-12T14:17:37",
-    "quantity": 70,
+    "createdAt": "2026-06-12T14:42:25",
+    "quantity": 5,
     "sampleId": "S001",
-    "id": "241fb12d-9503-4110-b623-f5260dcb27b6",
-    "customerName": "dasd",
-    "status": "RESERVED"
+    "id": "ORD-0001",
+    "customerName": "hi",
+    "status": "RELEASED"
   },
   {
-    "createdAt": "2026-06-12T14:18:27",
-    "quantity": 200,
-    "sampleId": "S005",
-    "id": "bec22d0e-fc38-4ce0-8225-c1fb8bd653b3",
-    "customerName": "asdfasdfas",
-    "status": "PRODUCING"
-  },
-  {
-    "createdAt": "2026-06-12T14:20:21",
-    "quantity": 10,
+    "createdAt": "2026-06-12T14:43:31",
+    "quantity": 40,
     "sampleId": "S002",
-    "id": "633ad6fe-08bb-4cf2-b0a9-fbe58ad5b931",
-    "customerName": "DAFSDFAS",
-    "status": "CONFIRMED"
+    "id": "ORD-0002",
+    "customerName": "bye",
+    "status": "RELEASED"
   },
   {
-    "createdAt": "2026-06-12T14:23:06",
-    "quantity": 60,
-    "sampleId": "S001",
-    "id": "94c70bbb-d672-4922-b86e-1c4b1073a0ce",
-    "customerName": "�안녕하세요",
+    "createdAt": "2026-06-12T14:46:59",
+    "quantity": 100,
+    "sampleId": "S005",
+    "id": "ORD-0003",
+    "customerName": "what",
     "status": "CONFIRMED"
-  },
-  {
-    "createdAt": "2026-06-12T14:28:47",
-    "quantity": 1,
-    "sampleId": "S001",
-    "id": "0796b122-7eee-4aec-a666-5caaec8c6fba",
-    "customerName": "SK",
-    "status": "REJECTED"
   }
 ]
