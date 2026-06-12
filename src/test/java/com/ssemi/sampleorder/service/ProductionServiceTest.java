@@ -9,6 +9,7 @@ import com.ssemi.sampleorder.repository.OrderRepository;
 import com.ssemi.sampleorder.repository.SampleRepository;
 import org.junit.jupiter.api.*;
 
+import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -202,6 +203,272 @@ class ProductionServiceTest {
         void zeroYieldThrows() {
             assertThrows(IllegalArgumentException.class,
                     () -> productionService.calculateActualProduction(10, 0.0));
+        }
+    }
+
+    // ── NEW: startNextProduction ─────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("startNextProduction — RESERVED 주문을 PRODUCING으로 전환")
+    class StartNextProduction {
+
+        /** 고정 Clock: 2026-06-12 09:00 */
+        private Clock fixedClock() {
+            Instant instant = LocalDateTime.of(2026, 6, 12, 9, 0)
+                    .atZone(ZoneId.systemDefault()).toInstant();
+            return Clock.fixed(instant, ZoneId.systemDefault());
+        }
+
+        /** RESERVED 주문을 큐에 삽입 */
+        private Order enqueueReservedOrder(String orderId, String sampleId, int qty) {
+            Order order = new Order(orderId, sampleId, "테스트고객", qty);
+            orderRepo.save(order);
+            queue.enqueue(order);
+            return order;
+        }
+
+        @Test
+        @DisplayName("큐 첫 번째 RESERVED 주문이 PRODUCING 상태로 전환됨")
+        void startNextChangesStatusToProducing() {
+            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            Order o = enqueueReservedOrder("O001", "S001", 10);
+
+            productionService.startNextProduction(fixedClock());
+
+            assertEquals(OrderStatus.PRODUCING, orderRepo.findById("O001").get().getStatus());
+        }
+
+        @Test
+        @DisplayName("startNextProduction → productionStartedAt이 Clock 시각으로 기록됨")
+        void startNextRecordsStartedAt() {
+            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            enqueueReservedOrder("O001", "S001", 10);
+            Clock clock = fixedClock();
+
+            productionService.startNextProduction(clock);
+
+            LocalDateTime expected = LocalDateTime.now(clock);
+            assertEquals(expected, orderRepo.findById("O001").get().getProductionStartedAt());
+        }
+
+        @Test
+        @DisplayName("startNextProduction → totalProductionMinutes 계산값 기록됨 (shortage>0)")
+        void startNextRecordsTotalProductionMinutes() {
+            // stock=0, qty=10, yield=1.0 → shortage=10 → actual=ceil(10/0.9)=12 → total=60*12=720
+            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            enqueueReservedOrder("O001", "S001", 10);
+
+            productionService.startNextProduction(fixedClock());
+
+            assertEquals(720, orderRepo.findById("O001").get().getTotalProductionMinutes());
+        }
+
+        @Test
+        @DisplayName("startNextProduction → stock 충분 시 (shortage=0) totalMinutes = avgTime * qty")
+        void startNextNoShortage() {
+            // stock=20 >= qty=10 → shortage=0 → total=60*10=600
+            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 20));
+            enqueueReservedOrder("O001", "S001", 10);
+
+            productionService.startNextProduction(fixedClock());
+
+            assertEquals(600, orderRepo.findById("O001").get().getTotalProductionMinutes());
+        }
+
+        @Test
+        @DisplayName("startNextProduction → 큐에서 제거됨 (queue.size 감소)")
+        void startNextRemovesFromQueue() {
+            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            enqueueReservedOrder("O001", "S001", 5);
+
+            productionService.startNextProduction(fixedClock());
+
+            assertEquals(0, queue.size());
+        }
+
+        @Test
+        @DisplayName("큐가 비어있으면 IllegalStateException")
+        void startNextOnEmptyQueueThrows() {
+            assertThrows(IllegalStateException.class,
+                    () -> productionService.startNextProduction(fixedClock()));
+        }
+
+        @Test
+        @DisplayName("이미 PRODUCING 중인 주문이 있으면 IllegalStateException")
+        void startNextWhileProducingThrows() {
+            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            sampleRepo.save(new Sample("S002", "InP",  60, 1.0, 0));
+            enqueueReservedOrder("O001", "S001", 5);
+            enqueueReservedOrder("O002", "S002", 5);
+
+            // 첫 번째는 성공
+            productionService.startNextProduction(fixedClock());
+
+            // 두 번째는 이미 PRODUCING 중이므로 예외
+            assertThrows(IllegalStateException.class,
+                    () -> productionService.startNextProduction(fixedClock()));
+        }
+    }
+
+    // ── NEW: completeProductionIfReady ───────────────────────────────────────
+
+    @Nested
+    @DisplayName("completeProductionIfReady — 경과 시간 체크 후 CONFIRMED")
+    class CompleteProductionIfReady {
+
+        /** PRODUCING 주문을 startedAt + totalMinutes 와 함께 orderRepo에 직접 저장 */
+        private Order saveProducingOrder(String orderId, String sampleId, int qty,
+                                         LocalDateTime startedAt, int totalMinutes) {
+            Order o = new Order(orderId, sampleId, "테스트고객", qty);
+            o.transitionTo(OrderStatus.PRODUCING);
+            o.startProduction(startedAt, totalMinutes);
+            orderRepo.save(o);
+            return o;
+        }
+
+        private Clock clockAt(LocalDateTime dt) {
+            return Clock.fixed(dt.atZone(ZoneId.systemDefault()).toInstant(), ZoneId.systemDefault());
+        }
+
+        @Test
+        @DisplayName("경과 시간 < totalProductionMinutes → 상태 변화 없음 (여전히 PRODUCING)")
+        void notReadyYetKeepsProducing() {
+            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            LocalDateTime start = LocalDateTime.of(2026, 6, 12, 9, 0);
+            saveProducingOrder("O001", "S001", 10, start, 60);
+
+            // 30분 경과 — 아직 미완
+            Clock clock = clockAt(start.plusMinutes(30));
+            productionService.completeProductionIfReady(clock);
+
+            assertEquals(OrderStatus.PRODUCING, orderRepo.findById("O001").get().getStatus());
+        }
+
+        @Test
+        @DisplayName("경과 시간 == totalProductionMinutes → CONFIRMED 전환")
+        void exactTimeCompletesProduction() {
+            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            LocalDateTime start = LocalDateTime.of(2026, 6, 12, 9, 0);
+            saveProducingOrder("O001", "S001", 10, start, 60);
+
+            Clock clock = clockAt(start.plusMinutes(60));
+            productionService.completeProductionIfReady(clock);
+
+            assertEquals(OrderStatus.CONFIRMED, orderRepo.findById("O001").get().getStatus());
+        }
+
+        @Test
+        @DisplayName("경과 시간 > totalProductionMinutes → CONFIRMED 전환")
+        void overTimeCompletesProduction() {
+            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            LocalDateTime start = LocalDateTime.of(2026, 6, 12, 9, 0);
+            saveProducingOrder("O001", "S001", 10, start, 60);
+
+            Clock clock = clockAt(start.plusMinutes(90));
+            productionService.completeProductionIfReady(clock);
+
+            assertEquals(OrderStatus.CONFIRMED, orderRepo.findById("O001").get().getStatus());
+        }
+
+        @Test
+        @DisplayName("완료 시 재고 정확히 반영 (addStock → reduceStock)")
+        void completionUpdatesStockCorrectly() {
+            // stock=0, qty=10, yield=1.0 → shortage=10 → actual=12 → finalStock=2
+            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            LocalDateTime start = LocalDateTime.of(2026, 6, 12, 9, 0);
+            // totalMinutes=720 (12개 * 60분)
+            saveProducingOrder("O001", "S001", 10, start, 720);
+
+            Clock clock = clockAt(start.plusMinutes(720));
+            productionService.completeProductionIfReady(clock);
+
+            assertEquals(2, sampleRepo.findById("S001").get().getStock());
+        }
+
+        @Test
+        @DisplayName("PRODUCING 주문 없으면 아무 것도 안 함 (예외 없음)")
+        void noProducingOrderDoesNothing() {
+            assertDoesNotThrow(() ->
+                    productionService.completeProductionIfReady(
+                            Clock.systemDefaultZone()));
+        }
+    }
+
+    // ── NEW: getCurrentlyProducingInfo ───────────────────────────────────────
+
+    @Nested
+    @DisplayName("getCurrentlyProducingInfo — 진행 정보 반환")
+    class GetCurrentlyProducingInfo {
+
+        private Clock clockAt(LocalDateTime dt) {
+            return Clock.fixed(dt.atZone(ZoneId.systemDefault()).toInstant(), ZoneId.systemDefault());
+        }
+
+        private Order saveProducingOrder(String orderId, String sampleId, int qty,
+                                          LocalDateTime startedAt, int totalMinutes) {
+            Order o = new Order(orderId, sampleId, "테스트고객", qty);
+            o.transitionTo(OrderStatus.PRODUCING);
+            o.startProduction(startedAt, totalMinutes);
+            orderRepo.save(o);
+            return o;
+        }
+
+        @Test
+        @DisplayName("PRODUCING 주문 없으면 Optional.empty() 반환")
+        void noProducingOrderReturnsEmpty() {
+            assertTrue(productionService.getCurrentlyProducingInfo(
+                    Clock.systemDefaultZone()).isEmpty());
+        }
+
+        @Test
+        @DisplayName("progressPercent = elapsed / total * 100 (50%)")
+        void progressPercentFiftyPercent() {
+            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            LocalDateTime start = LocalDateTime.of(2026, 6, 12, 9, 0);
+            saveProducingOrder("O001", "S001", 10, start, 60);
+
+            Clock clock = clockAt(start.plusMinutes(30));
+            var info = productionService.getCurrentlyProducingInfo(clock).get();
+
+            assertEquals(50, info.getProgressPercent());
+        }
+
+        @Test
+        @DisplayName("elapsed > total 이면 progressPercent는 100으로 캡핑")
+        void progressPercentCappedAt100() {
+            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            LocalDateTime start = LocalDateTime.of(2026, 6, 12, 9, 0);
+            saveProducingOrder("O001", "S001", 10, start, 60);
+
+            Clock clock = clockAt(start.plusMinutes(90)); // 초과
+            var info = productionService.getCurrentlyProducingInfo(clock).get();
+
+            assertEquals(100, info.getProgressPercent());
+        }
+
+        @Test
+        @DisplayName("estimatedCompletionTime = startedAt + totalProductionMinutes")
+        void estimatedCompletionTimeIsCorrect() {
+            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            LocalDateTime start = LocalDateTime.of(2026, 6, 12, 9, 0);
+            saveProducingOrder("O001", "S001", 10, start, 60);
+
+            Clock clock = clockAt(start.plusMinutes(10));
+            var info = productionService.getCurrentlyProducingInfo(clock).get();
+
+            assertEquals(start.plusMinutes(60), info.getEstimatedCompletionTime());
+        }
+
+        @Test
+        @DisplayName("sampleName이 시료명으로 채워짐")
+        void sampleNameIsPopulated() {
+            sampleRepo.save(new Sample("S001", "GaAs 웨이퍼", 60, 1.0, 0));
+            LocalDateTime start = LocalDateTime.of(2026, 6, 12, 9, 0);
+            saveProducingOrder("O001", "S001", 10, start, 60);
+
+            var info = productionService.getCurrentlyProducingInfo(clockAt(start)).get();
+
+            assertEquals("GaAs 웨이퍼", info.getSampleName());
         }
     }
 
