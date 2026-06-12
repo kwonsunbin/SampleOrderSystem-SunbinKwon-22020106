@@ -14,6 +14,7 @@ import com.ssemi.sampleorder.controller.ProductionController;
 import com.ssemi.sampleorder.controller.MonitorController;
 import com.ssemi.sampleorder.controller.ReleaseController;
 import com.ssemi.sampleorder.controller.MainController;
+import com.ssemi.sampleorder.service.DataInitializer;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -33,6 +34,10 @@ public class Main {
         JsonSampleRepository sampleRepo = new JsonSampleRepository(SAMPLES_PATH);
         JsonOrderRepository orderRepo   = new JsonOrderRepository(ORDERS_PATH);
         ProductionQueue queue           = new ProductionQueue();
+
+        DataInitializer dataInitializer = new DataInitializer(sampleRepo, orderRepo);
+        dataInitializer.seedSamples();
+        dataInitializer.clearOrders();
 
         SampleService     sampleService     = new SampleService(sampleRepo);
         OrderService      orderService      = new OrderService(orderRepo, sampleRepo, queue);
