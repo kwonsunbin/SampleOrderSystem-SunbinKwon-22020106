@@ -30,3 +30,12 @@ tasks.test {
 tasks.named<JavaExec>("run") {
     standardInput = System.`in`
 }
+
+tasks.register<JavaExec>("runClean") {
+    description = "기존 영속성 데이터를 초기화하고 앱을 실행합니다."
+    group = "application"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("com.ssemi.sampleorder.Main")
+    args("--clean")
+    standardInput = System.`in`
+}

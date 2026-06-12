@@ -15,10 +15,23 @@ import com.ssemi.sampleorder.controller.MonitorController;
 import com.ssemi.sampleorder.controller.ReleaseController;
 import com.ssemi.sampleorder.controller.MainController;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Arrays;
+
 public class Main {
-    public static void main(String[] args) {
-        JsonSampleRepository sampleRepo = new JsonSampleRepository("data/samples.json");
-        JsonOrderRepository orderRepo = new JsonOrderRepository("data/orders.json");
+    private static final String SAMPLES_PATH = "data/samples.json";
+    private static final String ORDERS_PATH  = "data/orders.json";
+
+    public static void main(String[] args) throws Exception {
+        if (Arrays.asList(args).contains("--clean")) {
+            Files.deleteIfExists(Paths.get(SAMPLES_PATH));
+            Files.deleteIfExists(Paths.get(ORDERS_PATH));
+            System.out.println("[clean] 기존 데이터를 초기화하고 새로 시작합니다.");
+        }
+
+        JsonSampleRepository sampleRepo = new JsonSampleRepository(SAMPLES_PATH);
+        JsonOrderRepository orderRepo = new JsonOrderRepository(ORDERS_PATH);
         ProductionQueue queue = new ProductionQueue();
         SampleService sampleService = new SampleService(sampleRepo);
         OrderService orderService = new OrderService(orderRepo, sampleRepo, queue);

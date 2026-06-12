@@ -1,0 +1,37 @@
+[
+  {
+    "id": "S001",
+    "name": "실리콘 웨이퍼 8인치",
+    "avgProductionTime": 120,
+    "yield": 0.92,
+    "stock": 50
+  },
+  {
+    "id": "S002",
+    "name": "실리콘 웨이퍼 12인치",
+    "avgProductionTime": 180,
+    "yield": 0.88,
+    "stock": 30
+  },
+  {
+    "id": "S003",
+    "name": "GaN 에피택시 웨이퍼",
+    "avgProductionTime": 300,
+    "yield": 0.75,
+    "stock": 15
+  },
+  {
+    "id": "S004",
+    "name": "SiC 파워 소자 시료",
+    "avgProductionTime": 240,
+    "yield": 0.80,
+    "stock": 20
+  },
+  {
+    "id": "S005",
+    "name": "MEMS 압력센서 시료",
+    "avgProductionTime": 90,
+    "yield": 0.95,
+    "stock": 100
+  }
+]
