@@ -4,7 +4,7 @@ public class Sample {
 
     private final String id;
     private final String name;
-    private final int avgProductionTime; // 분 단위
+    private final int avgProductionTime; // 초 단위
     private final double yield;          // 0 초과 ~ 1.0 이하
     private int stock;
 

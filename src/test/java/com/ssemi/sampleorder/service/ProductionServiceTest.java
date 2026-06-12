@@ -79,15 +79,15 @@ class ProductionServiceTest {
     class TotalProductionTimeCalculation {
 
         @Test
-        @DisplayName("avgTime=60, actualProduction=13 → 780분")
+        @DisplayName("avgTime=60, actualProduction=13 → 780초")
         void standardCase() {
             assertEquals(780, productionService.calculateTotalProductionTime(60, 13));
         }
 
         @Test
-        @DisplayName("avgTime=120, actualProduction=1 → 120분")
+        @DisplayName("avgTime=5, actualProduction=1 → 5초")
         void singleUnitProduction() {
-            assertEquals(120, productionService.calculateTotalProductionTime(120, 1));
+            assertEquals(5, productionService.calculateTotalProductionTime(5, 1));
         }
     }
 
@@ -100,8 +100,7 @@ class ProductionServiceTest {
         @Test
         @DisplayName("processNext → 주문 status == CONFIRMED")
         void processNextConfirmsOrder() {
-            // stock=0, qty=10, yield=1.0 → shortage=10, actual=12, finalStock=2
-            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            sampleRepo.save(new Sample("S001", "GaAs", 5, 1.0, 0));
             Order order = enqueueProducingOrder("O001", "S001", 10);
 
             productionService.processNext();
@@ -116,7 +115,7 @@ class ProductionServiceTest {
             // stock=0, qty=10, yield=1.0
             // shortage=10, actual=ceil(10/0.9)=12
             // newStock = 0 + 12 = 12, finalStock = 12 - 10 = 2
-            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            sampleRepo.save(new Sample("S001", "GaAs", 5, 1.0, 0));
             enqueueProducingOrder("O001", "S001", 10);
 
             productionService.processNext();
@@ -127,8 +126,8 @@ class ProductionServiceTest {
         @Test
         @DisplayName("processNext 후 queue size 감소")
         void processNextReducesQueueSize() {
-            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
-            sampleRepo.save(new Sample("S002", "InP", 60, 1.0, 0));
+            sampleRepo.save(new Sample("S001", "GaAs", 5, 1.0, 0));
+            sampleRepo.save(new Sample("S002", "InP", 5, 1.0, 0));
             enqueueProducingOrder("O001", "S001", 5);
             enqueueProducingOrder("O002", "S002", 5);
 
@@ -140,14 +139,13 @@ class ProductionServiceTest {
         @Test
         @DisplayName("FIFO 보장 — 먼저 접수된 주문이 먼저 처리됨")
         void processNextFollowsFifoOrder() {
-            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
-            sampleRepo.save(new Sample("S002", "InP", 60, 1.0, 0));
+            sampleRepo.save(new Sample("S001", "GaAs", 5, 1.0, 0));
+            sampleRepo.save(new Sample("S002", "InP", 5, 1.0, 0));
             Order first  = enqueueProducingOrder("O001", "S001", 5);
             Order second = enqueueProducingOrder("O002", "S002", 5);
 
             productionService.processNext();
 
-            // 첫 번째 주문만 CONFIRMED, 두 번째는 여전히 PRODUCING
             assertEquals(OrderStatus.CONFIRMED,
                     orderRepo.findById(first.getId()).get().getStatus());
             assertEquals(OrderStatus.PRODUCING,
@@ -157,9 +155,9 @@ class ProductionServiceTest {
         @Test
         @DisplayName("getQueueSnapshot → 현재 대기 목록 반환 (size 변화 없음)")
         void getQueueSnapshotReturnsCopyWithoutMutating() {
-            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
-            sampleRepo.save(new Sample("S002", "InP", 60, 1.0, 0));
-            sampleRepo.save(new Sample("S003", "SiC", 60, 1.0, 0));
+            sampleRepo.save(new Sample("S001", "GaAs", 5, 1.0, 0));
+            sampleRepo.save(new Sample("S002", "InP", 5, 1.0, 0));
+            sampleRepo.save(new Sample("S003", "SiC", 5, 1.0, 0));
             enqueueProducingOrder("O001", "S001", 5);
             enqueueProducingOrder("O002", "S002", 5);
             enqueueProducingOrder("O003", "S003", 5);
@@ -167,7 +165,7 @@ class ProductionServiceTest {
             List<Order> snapshot = productionService.getQueueSnapshot();
 
             assertEquals(3, snapshot.size());
-            assertEquals(3, queue.size()); // 원본 큐 변화 없음
+            assertEquals(3, queue.size());
         }
     }
 
@@ -206,10 +204,10 @@ class ProductionServiceTest {
         }
     }
 
-    // ── NEW: startNextProduction ─────────────────────────────────────────────
+    // ── startNextProduction (초 단위) ─────────────────────────────────────────
 
     @Nested
-    @DisplayName("startNextProduction — RESERVED 주문을 PRODUCING으로 전환")
+    @DisplayName("startNextProduction — RESERVED 주문을 PRODUCING으로 전환 (초 단위)")
     class StartNextProduction {
 
         /** 고정 Clock: 2026-06-12 09:00 */
@@ -219,7 +217,6 @@ class ProductionServiceTest {
             return Clock.fixed(instant, ZoneId.systemDefault());
         }
 
-        /** RESERVED 주문을 큐에 삽입 */
         private Order enqueueReservedOrder(String orderId, String sampleId, int qty) {
             Order order = new Order(orderId, sampleId, "테스트고객", qty);
             orderRepo.save(order);
@@ -230,8 +227,8 @@ class ProductionServiceTest {
         @Test
         @DisplayName("큐 첫 번째 RESERVED 주문이 PRODUCING 상태로 전환됨")
         void startNextChangesStatusToProducing() {
-            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
-            Order o = enqueueReservedOrder("O001", "S001", 10);
+            sampleRepo.save(new Sample("S001", "GaAs", 5, 1.0, 0));
+            enqueueReservedOrder("O001", "S001", 10);
 
             productionService.startNextProduction(fixedClock());
 
@@ -241,7 +238,7 @@ class ProductionServiceTest {
         @Test
         @DisplayName("startNextProduction → productionStartedAt이 Clock 시각으로 기록됨")
         void startNextRecordsStartedAt() {
-            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            sampleRepo.save(new Sample("S001", "GaAs", 5, 1.0, 0));
             enqueueReservedOrder("O001", "S001", 10);
             Clock clock = fixedClock();
 
@@ -252,33 +249,33 @@ class ProductionServiceTest {
         }
 
         @Test
-        @DisplayName("startNextProduction → totalProductionMinutes 계산값 기록됨 (shortage>0)")
-        void startNextRecordsTotalProductionMinutes() {
-            // stock=0, qty=10, yield=1.0 → shortage=10 → actual=ceil(10/0.9)=12 → total=60*12=720
-            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+        @DisplayName("startNextProduction → totalProductionSeconds 계산값 기록됨 (shortage>0)")
+        void startNextRecordsTotalProductionSeconds() {
+            // stock=0, qty=10, yield=1.0 → shortage=10 → actual=ceil(10/0.9)=12 → total=5*12=60초
+            sampleRepo.save(new Sample("S001", "GaAs", 5, 1.0, 0));
             enqueueReservedOrder("O001", "S001", 10);
 
             productionService.startNextProduction(fixedClock());
 
-            assertEquals(720, orderRepo.findById("O001").get().getTotalProductionMinutes());
+            assertEquals(60, orderRepo.findById("O001").get().getTotalProductionSeconds());
         }
 
         @Test
-        @DisplayName("startNextProduction → stock 충분 시 (shortage=0) totalMinutes = avgTime * qty")
+        @DisplayName("startNextProduction → stock 충분 시 (shortage=0) totalSeconds = avgTime * qty")
         void startNextNoShortage() {
-            // stock=20 >= qty=10 → shortage=0 → total=60*10=600
-            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 20));
+            // stock=20 >= qty=10 → shortage=0 → total=5*10=50초
+            sampleRepo.save(new Sample("S001", "GaAs", 5, 1.0, 20));
             enqueueReservedOrder("O001", "S001", 10);
 
             productionService.startNextProduction(fixedClock());
 
-            assertEquals(600, orderRepo.findById("O001").get().getTotalProductionMinutes());
+            assertEquals(50, orderRepo.findById("O001").get().getTotalProductionSeconds());
         }
 
         @Test
         @DisplayName("startNextProduction → 큐에서 제거됨 (queue.size 감소)")
         void startNextRemovesFromQueue() {
-            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            sampleRepo.save(new Sample("S001", "GaAs", 5, 1.0, 0));
             enqueueReservedOrder("O001", "S001", 5);
 
             productionService.startNextProduction(fixedClock());
@@ -296,32 +293,30 @@ class ProductionServiceTest {
         @Test
         @DisplayName("이미 PRODUCING 중인 주문이 있으면 IllegalStateException")
         void startNextWhileProducingThrows() {
-            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
-            sampleRepo.save(new Sample("S002", "InP",  60, 1.0, 0));
+            sampleRepo.save(new Sample("S001", "GaAs", 5, 1.0, 0));
+            sampleRepo.save(new Sample("S002", "InP",  5, 1.0, 0));
             enqueueReservedOrder("O001", "S001", 5);
             enqueueReservedOrder("O002", "S002", 5);
 
-            // 첫 번째는 성공
             productionService.startNextProduction(fixedClock());
 
-            // 두 번째는 이미 PRODUCING 중이므로 예외
             assertThrows(IllegalStateException.class,
                     () -> productionService.startNextProduction(fixedClock()));
         }
     }
 
-    // ── NEW: completeProductionIfReady ───────────────────────────────────────
+    // ── completeProductionIfReady (초 단위) ───────────────────────────────────
 
     @Nested
-    @DisplayName("completeProductionIfReady — 경과 시간 체크 후 CONFIRMED")
+    @DisplayName("completeProductionIfReady — 경과 시간(초) 체크 후 CONFIRMED")
     class CompleteProductionIfReady {
 
-        /** PRODUCING 주문을 startedAt + totalMinutes 와 함께 orderRepo에 직접 저장 */
+        /** PRODUCING 주문을 startedAt + totalSeconds 와 함께 orderRepo에 직접 저장 */
         private Order saveProducingOrder(String orderId, String sampleId, int qty,
-                                         LocalDateTime startedAt, int totalMinutes) {
+                                         LocalDateTime startedAt, int totalSeconds) {
             Order o = new Order(orderId, sampleId, "테스트고객", qty);
             o.transitionTo(OrderStatus.PRODUCING);
-            o.startProduction(startedAt, totalMinutes);
+            o.startProduction(startedAt, totalSeconds);
             orderRepo.save(o);
             return o;
         }
@@ -331,40 +326,40 @@ class ProductionServiceTest {
         }
 
         @Test
-        @DisplayName("경과 시간 < totalProductionMinutes → 상태 변화 없음 (여전히 PRODUCING)")
+        @DisplayName("경과 시간(초) < totalProductionSeconds → 상태 변화 없음 (여전히 PRODUCING)")
         void notReadyYetKeepsProducing() {
-            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            sampleRepo.save(new Sample("S001", "GaAs", 5, 1.0, 0));
             LocalDateTime start = LocalDateTime.of(2026, 6, 12, 9, 0);
-            saveProducingOrder("O001", "S001", 10, start, 60);
+            saveProducingOrder("O001", "S001", 10, start, 30);
 
-            // 30분 경과 — 아직 미완
-            Clock clock = clockAt(start.plusMinutes(30));
+            // 15초 경과 — 아직 미완
+            Clock clock = clockAt(start.plusSeconds(15));
             productionService.completeProductionIfReady(clock);
 
             assertEquals(OrderStatus.PRODUCING, orderRepo.findById("O001").get().getStatus());
         }
 
         @Test
-        @DisplayName("경과 시간 == totalProductionMinutes → CONFIRMED 전환")
+        @DisplayName("경과 시간(초) == totalProductionSeconds → CONFIRMED 전환")
         void exactTimeCompletesProduction() {
-            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            sampleRepo.save(new Sample("S001", "GaAs", 5, 1.0, 0));
             LocalDateTime start = LocalDateTime.of(2026, 6, 12, 9, 0);
-            saveProducingOrder("O001", "S001", 10, start, 60);
+            saveProducingOrder("O001", "S001", 10, start, 30);
 
-            Clock clock = clockAt(start.plusMinutes(60));
+            Clock clock = clockAt(start.plusSeconds(30));
             productionService.completeProductionIfReady(clock);
 
             assertEquals(OrderStatus.CONFIRMED, orderRepo.findById("O001").get().getStatus());
         }
 
         @Test
-        @DisplayName("경과 시간 > totalProductionMinutes → CONFIRMED 전환")
+        @DisplayName("경과 시간(초) > totalProductionSeconds → CONFIRMED 전환")
         void overTimeCompletesProduction() {
-            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            sampleRepo.save(new Sample("S001", "GaAs", 5, 1.0, 0));
             LocalDateTime start = LocalDateTime.of(2026, 6, 12, 9, 0);
-            saveProducingOrder("O001", "S001", 10, start, 60);
+            saveProducingOrder("O001", "S001", 10, start, 30);
 
-            Clock clock = clockAt(start.plusMinutes(90));
+            Clock clock = clockAt(start.plusSeconds(45));
             productionService.completeProductionIfReady(clock);
 
             assertEquals(OrderStatus.CONFIRMED, orderRepo.findById("O001").get().getStatus());
@@ -374,12 +369,12 @@ class ProductionServiceTest {
         @DisplayName("완료 시 재고 정확히 반영 (addStock → reduceStock)")
         void completionUpdatesStockCorrectly() {
             // stock=0, qty=10, yield=1.0 → shortage=10 → actual=12 → finalStock=2
-            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            sampleRepo.save(new Sample("S001", "GaAs", 5, 1.0, 0));
             LocalDateTime start = LocalDateTime.of(2026, 6, 12, 9, 0);
-            // totalMinutes=720 (12개 * 60분)
-            saveProducingOrder("O001", "S001", 10, start, 720);
+            // totalSeconds=60 (12개 * 5초)
+            saveProducingOrder("O001", "S001", 10, start, 60);
 
-            Clock clock = clockAt(start.plusMinutes(720));
+            Clock clock = clockAt(start.plusSeconds(60));
             productionService.completeProductionIfReady(clock);
 
             assertEquals(2, sampleRepo.findById("S001").get().getStock());
@@ -394,10 +389,10 @@ class ProductionServiceTest {
         }
     }
 
-    // ── NEW: getCurrentlyProducingInfo ───────────────────────────────────────
+    // ── getCurrentlyProducingInfo (초 단위) ───────────────────────────────────
 
     @Nested
-    @DisplayName("getCurrentlyProducingInfo — 진행 정보 반환")
+    @DisplayName("getCurrentlyProducingInfo — 진행 정보 반환 (초 단위)")
     class GetCurrentlyProducingInfo {
 
         private Clock clockAt(LocalDateTime dt) {
@@ -405,10 +400,10 @@ class ProductionServiceTest {
         }
 
         private Order saveProducingOrder(String orderId, String sampleId, int qty,
-                                          LocalDateTime startedAt, int totalMinutes) {
+                                          LocalDateTime startedAt, int totalSeconds) {
             Order o = new Order(orderId, sampleId, "테스트고객", qty);
             o.transitionTo(OrderStatus.PRODUCING);
-            o.startProduction(startedAt, totalMinutes);
+            o.startProduction(startedAt, totalSeconds);
             orderRepo.save(o);
             return o;
         }
@@ -421,13 +416,13 @@ class ProductionServiceTest {
         }
 
         @Test
-        @DisplayName("progressPercent = elapsed / total * 100 (50%)")
+        @DisplayName("progressPercent = elapsedSeconds / totalSeconds * 100 (50%)")
         void progressPercentFiftyPercent() {
-            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            sampleRepo.save(new Sample("S001", "GaAs", 5, 1.0, 0));
             LocalDateTime start = LocalDateTime.of(2026, 6, 12, 9, 0);
-            saveProducingOrder("O001", "S001", 10, start, 60);
+            saveProducingOrder("O001", "S001", 10, start, 30);
 
-            Clock clock = clockAt(start.plusMinutes(30));
+            Clock clock = clockAt(start.plusSeconds(15));
             var info = productionService.getCurrentlyProducingInfo(clock).get();
 
             assertEquals(50, info.getProgressPercent());
@@ -436,35 +431,48 @@ class ProductionServiceTest {
         @Test
         @DisplayName("elapsed > total 이면 progressPercent는 100으로 캡핑")
         void progressPercentCappedAt100() {
-            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            sampleRepo.save(new Sample("S001", "GaAs", 5, 1.0, 0));
             LocalDateTime start = LocalDateTime.of(2026, 6, 12, 9, 0);
-            saveProducingOrder("O001", "S001", 10, start, 60);
+            saveProducingOrder("O001", "S001", 10, start, 30);
 
-            Clock clock = clockAt(start.plusMinutes(90)); // 초과
+            Clock clock = clockAt(start.plusSeconds(60));
             var info = productionService.getCurrentlyProducingInfo(clock).get();
 
             assertEquals(100, info.getProgressPercent());
         }
 
         @Test
-        @DisplayName("estimatedCompletionTime = startedAt + totalProductionMinutes")
+        @DisplayName("estimatedCompletionTime = startedAt + totalProductionSeconds")
         void estimatedCompletionTimeIsCorrect() {
-            sampleRepo.save(new Sample("S001", "GaAs", 60, 1.0, 0));
+            sampleRepo.save(new Sample("S001", "GaAs", 5, 1.0, 0));
             LocalDateTime start = LocalDateTime.of(2026, 6, 12, 9, 0);
-            saveProducingOrder("O001", "S001", 10, start, 60);
+            saveProducingOrder("O001", "S001", 10, start, 30);
 
-            Clock clock = clockAt(start.plusMinutes(10));
+            Clock clock = clockAt(start.plusSeconds(10));
             var info = productionService.getCurrentlyProducingInfo(clock).get();
 
-            assertEquals(start.plusMinutes(60), info.getEstimatedCompletionTime());
+            assertEquals(start.plusSeconds(30), info.getEstimatedCompletionTime());
+        }
+
+        @Test
+        @DisplayName("getElapsedSeconds 반환값 정확 (15초 경과)")
+        void elapsedSecondsIsCorrect() {
+            sampleRepo.save(new Sample("S001", "GaAs", 5, 1.0, 0));
+            LocalDateTime start = LocalDateTime.of(2026, 6, 12, 9, 0);
+            saveProducingOrder("O001", "S001", 10, start, 30);
+
+            Clock clock = clockAt(start.plusSeconds(15));
+            var info = productionService.getCurrentlyProducingInfo(clock).get();
+
+            assertEquals(15L, info.getElapsedSeconds());
         }
 
         @Test
         @DisplayName("sampleName이 시료명으로 채워짐")
         void sampleNameIsPopulated() {
-            sampleRepo.save(new Sample("S001", "GaAs 웨이퍼", 60, 1.0, 0));
+            sampleRepo.save(new Sample("S001", "GaAs 웨이퍼", 5, 1.0, 0));
             LocalDateTime start = LocalDateTime.of(2026, 6, 12, 9, 0);
-            saveProducingOrder("O001", "S001", 10, start, 60);
+            saveProducingOrder("O001", "S001", 10, start, 30);
 
             var info = productionService.getCurrentlyProducingInfo(clockAt(start)).get();
 

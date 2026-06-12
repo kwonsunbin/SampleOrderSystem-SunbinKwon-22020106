@@ -9,7 +9,7 @@ import java.util.List;
 
 public class ProductionView {
 
-    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
+    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     // 컬럼 너비: 순서, 주문번호, 시료명, 주문량, 부족분, 실생산량, 예상시간
     private static final int[] COLS = {4, 13, 18, 7, 7, 8, 8};
@@ -78,7 +78,7 @@ public class ProductionView {
         cv.printBlank();
         cv.print("  주문번호 " + Color.BOLD + shortId(info.getOrder().getId()) + Color.RESET
                 + "  시료 " + Color.BOLD + info.getSampleName() + Color.RESET);
-        cv.print(String.format("  재고 %d ea → 부족 %d ea → 실생산량 %d ea  (수율 %.2f / %d min)",
+        cv.print(String.format("  재고 %d ea → 부족 %d ea → 실생산량 %d ea  (수율 %.2f / %d sec)",
                 info.getCurrentStock(), info.getShortage(), info.getActualProduction(),
                 info.getYield(), info.getAvgProductionTime()));
         cv.printBlank();

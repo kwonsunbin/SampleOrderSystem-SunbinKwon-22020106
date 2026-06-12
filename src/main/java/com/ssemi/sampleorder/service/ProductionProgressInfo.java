@@ -13,15 +13,15 @@ public class ProductionProgressInfo {
     private final int actualProduction;
     private final double yield;
     private final int avgProductionTime;
-    private final long elapsedMinutes;
-    private final int totalMinutes;
+    private final long elapsedSeconds;
+    private final int totalSeconds;
     private final int progressPercent;
     private final LocalDateTime estimatedCompletionTime;
 
     public ProductionProgressInfo(Order order, String sampleName,
                                   int currentStock, int shortage, int actualProduction,
                                   double yield, int avgProductionTime,
-                                  long elapsedMinutes, int totalMinutes,
+                                  long elapsedSeconds, int totalSeconds,
                                   int progressPercent, LocalDateTime estimatedCompletionTime) {
         this.order = order;
         this.sampleName = sampleName;
@@ -30,8 +30,8 @@ public class ProductionProgressInfo {
         this.actualProduction = actualProduction;
         this.yield = yield;
         this.avgProductionTime = avgProductionTime;
-        this.elapsedMinutes = elapsedMinutes;
-        this.totalMinutes = totalMinutes;
+        this.elapsedSeconds = elapsedSeconds;
+        this.totalSeconds = totalSeconds;
         this.progressPercent = progressPercent;
         this.estimatedCompletionTime = estimatedCompletionTime;
     }
@@ -43,8 +43,8 @@ public class ProductionProgressInfo {
     public int getActualProduction() { return actualProduction; }
     public double getYield() { return yield; }
     public int getAvgProductionTime() { return avgProductionTime; }
-    public long getElapsedMinutes() { return elapsedMinutes; }
-    public int getTotalMinutes() { return totalMinutes; }
+    public long getElapsedSeconds() { return elapsedSeconds; }
+    public int getTotalSeconds() { return totalSeconds; }
     public int getProgressPercent() { return progressPercent; }
     public LocalDateTime getEstimatedCompletionTime() { return estimatedCompletionTime; }
 }

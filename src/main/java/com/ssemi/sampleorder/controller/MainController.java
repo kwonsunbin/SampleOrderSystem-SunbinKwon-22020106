@@ -2,10 +2,12 @@ package com.ssemi.sampleorder.controller;
 
 import com.ssemi.sampleorder.model.OrderStatus;
 import com.ssemi.sampleorder.service.MonitorService;
+import com.ssemi.sampleorder.service.ProductionService;
 import com.ssemi.sampleorder.service.SampleService;
 import com.ssemi.sampleorder.view.ConsoleView;
 import com.ssemi.sampleorder.view.MenuView;
 
+import java.time.Clock;
 import java.util.Map;
 
 public class MainController {
@@ -17,8 +19,9 @@ public class MainController {
     private final ReleaseController releaseController;
     private final ConsoleView consoleView;
     private final MenuView menuView;
-    private final SampleService sampleService;     // nullable
-    private final MonitorService monitorService;   // nullable
+    private final SampleService sampleService;         // nullable
+    private final MonitorService monitorService;       // nullable
+    private final ProductionService productionService; // nullable
 
     // 하위 호환 생성자 (테스트용)
     public MainController(SampleController sampleController,
@@ -28,7 +31,7 @@ public class MainController {
                           ReleaseController releaseController,
                           ConsoleView consoleView) {
         this(sampleController, orderController, productionController,
-             monitorController, releaseController, consoleView, null, null);
+             monitorController, releaseController, consoleView, null, null, null);
     }
 
     public MainController(SampleController sampleController,
@@ -38,7 +41,8 @@ public class MainController {
                           ReleaseController releaseController,
                           ConsoleView consoleView,
                           SampleService sampleService,
-                          MonitorService monitorService) {
+                          MonitorService monitorService,
+                          ProductionService productionService) {
         this.sampleController     = sampleController;
         this.orderController      = orderController;
         this.productionController = productionController;
@@ -48,10 +52,12 @@ public class MainController {
         this.menuView             = new MenuView(consoleView);
         this.sampleService        = sampleService;
         this.monitorService       = monitorService;
+        this.productionService    = productionService;
     }
 
     public void run() {
         while (true) {
+            tickProductionCompletion();
             showMainMenu();
             int choice = consoleView.readInt("선택");
             switch (choice) {
@@ -64,6 +70,12 @@ public class MainController {
                 case 0 -> { return; }
                 default -> consoleView.printError("잘못된 선택입니다. 0~6 사이의 숫자를 입력하세요.");
             }
+        }
+    }
+
+    private void tickProductionCompletion() {
+        if (productionService != null) {
+            productionService.completeProductionIfReady(Clock.systemDefaultZone());
         }
     }
 
