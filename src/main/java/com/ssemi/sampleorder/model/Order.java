@@ -36,6 +36,22 @@ public class Order {
         this.createdAt = LocalDateTime.now();
     }
 
+    // JSON 역직렬화 전용 — status와 createdAt을 직접 복원
+    public Order(String id, String sampleId, String customerName, int quantity,
+                 OrderStatus status, LocalDateTime createdAt) {
+        if (customerName == null || customerName.isBlank())
+            throw new IllegalArgumentException("customerName은 null이거나 공백일 수 없습니다.");
+        if (quantity <= 0)
+            throw new IllegalArgumentException("quantity는 1 이상이어야 합니다: " + quantity);
+
+        this.id = id;
+        this.sampleId = sampleId;
+        this.customerName = customerName;
+        this.quantity = quantity;
+        this.status = status;
+        this.createdAt = createdAt;
+    }
+
     public void transitionTo(OrderStatus next) {
         EnumSet<OrderStatus> allowed = ALLOWED_TRANSITIONS.get(this.status);
         if (!allowed.contains(next)) {
