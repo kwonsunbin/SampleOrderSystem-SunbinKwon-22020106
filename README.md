@@ -44,26 +44,12 @@ RESERVED ──► CONFIRMED ──► RELEASED
 
 ---
 
-## 빌드
-
-```bash
-./gradlew build
-```
-
-빌드 결과물:
-
-```text
-build/libs/SampleOrderSystem-1.0-SNAPSHOT.jar
-```
-
----
-
 ## 실행 방법
 
 ### 1. 영속 모드 (기본) — 이전 데이터 유지
 
 ```bash
-./gradlew run
+./run.sh
 ```
 
 `data/samples.json`, `data/orders.json`에 저장된 기존 데이터를 그대로 불러와 시작합니다.
@@ -73,22 +59,14 @@ build/libs/SampleOrderSystem-1.0-SNAPSHOT.jar
 ### 2. 클린 모드 — 데이터 초기화 후 시작
 
 ```bash
-./gradlew runClean
+./run-clean.sh
 ```
 
 기존 데이터 파일을 삭제하고 빈 상태로 시작합니다.
 
 처음부터 새로 테스트하고 싶을 때 사용합니다.
 
-### 3. 직접 JAR 실행
-
-```bash
-# 영속 모드
-java -jar build/libs/SampleOrderSystem-1.0-SNAPSHOT.jar
-
-# 클린 모드
-java -jar build/libs/SampleOrderSystem-1.0-SNAPSHOT.jar --clean
-```
+> 두 스크립트 모두 빌드(installDist)를 자동으로 수행한 뒤 앱을 실행합니다. 별도의 빌드 단계가 필요 없습니다.
 
 ### 실행 화면
 
